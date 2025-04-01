@@ -1,0 +1,22 @@
+.game-hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    pointer-events: none;
+}
+
+.game-button {
+    pointer-events: auto;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.game-button:hover {
+    background: rgba(0, 0, 0, 0.7);
+} 
