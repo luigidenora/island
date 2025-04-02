@@ -1,22 +1,362 @@
-.game-hud {
+/* Base styles */
+:root {
+    --primary-color: #FFB627;
+    --secondary-color: #b27e15;
+    --background-color: rgba(25, 25, 35, 0.95);
+    --text-color: #fff;
+    --shadow-color: rgba(0, 0, 0, 0.25);
+    --heart-color: #ff3b3b;
+    --border-radius: 24px;
+    --font-primary: 'monospace', -apple-system, BlinkMacSystemFont, sans-serif;
+    --transform-gpu: translate3d(0, 0, 0);
+    --button-shadow: 0 8px 0 var(--shadow-color);
+    --button-shadow-inset: inset 0 -8px 0 rgba(0, 0, 0, 0.1);
+    --button-shadow-active: 0 4px 0 var(--shadow-color);
+    --transition-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --transition-smooth: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Level Select Screen */
+.level-select-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    pointer-events: none;
+    height: 100%;
+    background-color: var(--background-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem;
+    font-family: var(--font-primary);
+}
+
+.level-select-title {
+    color: var(--text-color);
+    font-size: 4rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-shadow: 4px 4px 0px var(--primary-color),
+                 8px 8px 0px var(--shadow-color);
+    transform: rotate(-2deg);
+}
+
+.level-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2.5rem;
+    padding: 2rem;
+    transform: rotate(2deg);
+}
+
+.level-button {
+    width: 220px;
+    height: 220px;
+    background: var(--text-color);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.3s var(--transition-bounce);
+    box-shadow: var(--button-shadow), var(--button-shadow-inset);
+}
+
+.level-button:hover:not(.locked) {
+    transform: translateY(-8px) scale(1.05);
+}
+
+.level-button:active:not(.locked) {
+    transform: translateY(4px);
+    box-shadow: var(--button-shadow-active);
+}
+
+.level-button.locked {
+    background: var(--background-color);
+    opacity: 0.8;
+}
+
+.level-number {
+    font-size: 5rem;
+    font-weight: 900;
+    color: var(--primary-color);
+    text-shadow: 3px 3px 0 var(--shadow-color);
+    position: relative;
+    z-index: 1;
+}
+
+.level-button::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+    background: var(--primary-color);
+    border-radius: var(--border-radius);
+    z-index: -1;
+    transition: transform 0.2s var(--transition-smooth);
+}
+
+.lock-icon {
+    position: absolute;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    font-size: 2.5rem;
+    filter: drop-shadow(2px 2px 0 var(--shadow-color));
+}
+
+/* Game HUD */
+.hud {
+    --hud-padding: clamp(0.5rem, 2vw, 1.5rem);
+    --hud-gap: clamp(0.3rem, 1.5vw, 0.8rem);
+    --avatar-size: clamp(2.5rem, 5vw, 3.5rem);
+    --content-min: clamp(100px, 30vw, 200px);
+    
+    position: fixed;
+    top: var(--hud-padding);
+    left: var(--hud-padding);
+    right: var(--hud-padding);
+    
+    display: grid;
+    grid-template-areas: 
+        "avatar health"
+        "avatar score";
+    grid-template-columns: 
+        minmax(auto, var(--avatar-size))
+        minmax(var(--content-min), 1fr);
+    gap: var(--hud-gap);
+    
+    width: min(100%, 420px);
+    margin: 0;
+    padding: 0;
+    
+    font-family: var(--font-primary);
+}
+
+/* Avatar Hexagon */
+.avatar-hex {
+    grid-area: avatar;
+    width: var(--avatar-size);
+    height: calc(var(--avatar-size) * 1.15);
+    position: relative;
+    transform: var(--transform-gpu) rotate(40deg);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.avatar-hex::before {
+    content: '';
+    position: absolute;
+    width: calc(100% + 15px);
+    height: calc(100% + 15px);
+    top: -7.5px;
+    left: -7.5px;
+    background: var(--primary-color);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.avatar-hex::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: var(--secondary-color);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.avatar-hex img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+    transform: rotate(-40deg);
+    position: relative;
+    z-index: 1;
+}
+
+/* Health */
+.health {
+    grid-area: health;
+    display: flex;
+    gap: 0.25rem;
+    color: var(--heart-color);
+    font-size: 1.5rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.health__heart {
+    display: inline-block;
+    transition: transform 0.3s var(--transition-bounce);
+    filter: drop-shadow(0 0 2px rgba(255, 0, 0, 0.5));
+    font-size: clamp(1rem, 3vw, 2.5rem);
+}
+
+.health--updating .health__heart {
+    animation: heartBeat 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Score */
+.score {
+    grid-area: score;
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.2rem;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.score__label,
+.score__value {
+    color: var(--text-color);
+    font-size: clamp(0.8rem, 1.5vw, 1rem);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.score__value {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+    transform: var(--transform-gpu);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: baseline;
+}
+
+.score__digit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 0.8em;
+    height: 1em;
+    overflow: hidden;
+    text-align: center;
+    margin: 0 1px;
+    transform: var(--transform-gpu);
+}
+
+.score__digit-inner {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s var(--transition-smooth);
+    transform: var(--transform-gpu);
+}
+
+.score__digit--rolling .score__digit-inner {
+    animation: rollDigit 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes rollDigit {
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+    100% {
+        transform: translate3d(0, -100%, 0);
+    }
+}
+
+.score--updating {
+    animation: updatePulse 0.3s ease-out;
+}
+
+@keyframes updatePulse {
+    0% { 
+        transform: scale3d(1, 1, 1);
+        filter: brightness(1);
+    }
+    50% { 
+        transform: scale3d(1.1, 1.1, 1);
+        filter: brightness(1.2);
+    }
+    100% { 
+        transform: scale3d(1, 1, 1);
+        filter: brightness(1);
+    }
+}
+
+/* Animations */
+@keyframes heartBeat {
+    0% { 
+        transform: scale3d(1, 1, 1);
+        filter: brightness(1) drop-shadow(0 0 2px rgba(255, 0, 0, 0.5));
+    }
+    50% { 
+        transform: scale3d(1.2, 1.2, 1);
+        filter: brightness(1.2) drop-shadow(0 0 4px rgba(255, 0, 0, 0.7));
+    }
+    100% { 
+        transform: scale3d(1, 1, 1);
+        filter: brightness(1) drop-shadow(0 0 2px rgba(255, 0, 0, 0.5));
+    }
+}
+
+/* Animazioni */
+@keyframes bounce {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    50% { transform: translate3d(0, -10px, 0); }
+}
+
+.level-button:hover .level-number {
+    animation: bounce 0.6s var(--transition-bounce) infinite;
 }
 
 .game-button {
     pointer-events: auto;
     padding: 8px 16px;
     border: none;
-    border-radius: 4px;
-    background: rgba(0, 0, 0, 0.5);
-    color: white;
+    border-radius: var(--border-radius);
+    background: var(--background-color);
+    color: var(--text-color);
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s var(--transition-smooth);
+    box-shadow: var(--button-shadow), var(--button-shadow-inset);
 }
 
 .game-button:hover {
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.game-button:active {
+    transform: translateY(4px);
+    box-shadow: var(--button-shadow-active);
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .score__digit-inner,
+    .health__heart,
+    .score,
+    .health {
+        transition: none;
+        animation: none;
+        transform: none !important;
+    }
+
+    .score__digit--rolling .score__digit-inner {
+        animation: none;
+        transform: none !important;
+    }
+}
+
+/* Ottimizzazioni GPU */
+.score,
+.health,
+.score__digit,
+.score__digit-inner,
+.health__heart {
+    transform: var(--transform-gpu);
+    will-change: transform;
+    backface-visibility: hidden;
+    perspective: 1000px;
 } 

@@ -1,0 +1,162 @@
+export class GameHUD {
+    private readonly container: HTMLDivElement;
+    private readonly scoreContainer: HTMLDivElement;
+    private readonly scoreLabel: HTMLDivElement;
+    private readonly scoreValue: HTMLDivElement;
+    private readonly healthElement: HTMLDivElement;
+    private readonly intervalIds: number[] = [];
+    private readonly maxHealth: number = 3;
+    private readonly animationDuration: number = 150;
+    private readonly updateDuration: number = 300;
+
+    private _score: number = 0;
+    private _health: number = 3;
+
+    constructor() {
+        this.container = document.createElement('div');
+        this.container.className = 'hud';
+        
+        // Crea l'avatar hexagon
+        const avatarHex = document.createElement('div');
+        avatarHex.className = 'avatar-hex';
+        
+        // Crea il contenitore dello score con label
+        this.scoreContainer = document.createElement('div');
+        this.scoreContainer.className = 'score';
+        
+        this.scoreLabel = document.createElement('div');
+        this.scoreLabel.className = 'score__label';
+        this.scoreLabel.textContent = 'SCORE:';
+        
+        this.scoreValue = document.createElement('div');
+        this.scoreValue.className = 'score__value';
+        
+        this.scoreContainer.append(this.scoreLabel, this.scoreValue);
+        
+        this.healthElement = document.createElement('div');
+        this.healthElement.className = 'health';
+        
+        this.init();
+
+        // Aggiungi gli elementi al container nell'ordine corretto per la grid
+        this.container.append(
+            avatarHex,
+            this.healthElement,
+            this.scoreContainer
+        );
+    }
+
+    private init(): void {
+        // Imposta i valori iniziali
+        this.health = this._health;
+        this.score = this._score;
+    }
+
+    // Getters and Setters
+    get score(): number {
+        return this._score;
+    }
+
+    set score(value: number) {
+        this._score = value;
+        this.animateNumberChange(this.scoreValue, value);
+    }
+
+    get health(): number {
+        return this._health;
+    }
+
+    set health(value: number) {
+        this._health = value;
+        this.updateHealthDisplay();
+        this.updateElementStyle(this.healthElement, 'health--updating', 800);
+    }
+
+    // Private methods
+    private updateElementStyle(element: HTMLElement, className: string, duration: number = this.updateDuration): void {
+        element.classList.add(className);
+        setTimeout(() => element.classList.remove(className), duration);
+    }
+
+    private updateHealthDisplay(): void {
+        const hearts = Array(this.maxHealth)
+            .fill(null)
+            .map((_, index) => {
+                const isFull = index < this._health;
+                return `<span class="health__heart ${!isFull ? 'health__heart--empty' : ''}">${isFull ? '❤️' : '🖤'}</span>`;
+            })
+            .join('');
+        
+        this.healthElement.innerHTML = hearts;
+    }
+
+    private createRollingNumber(value: number): string {
+        return value.toString().padStart(4, '0').split('').map(digit => 
+            `<span class="score__digit">
+                <span class="score__digit-inner">${digit}</span>
+            </span>`
+        ).join('');
+    }
+
+    private animateNumberChange(element: HTMLDivElement, newValue: number): void {
+        const oldDigits = element.querySelectorAll('.score__digit');
+        const newDigits = this.createRollingNumber(newValue);
+        
+        element.innerHTML = newDigits;
+        const newDigitElements = element.querySelectorAll('.score__digit');
+        
+        newDigitElements.forEach((digit, index) => {
+            const oldDigit = oldDigits[index];
+            const oldDigitValue = oldDigit?.querySelector('.score__digit-inner')?.textContent || '';
+            const newDigitValue = digit.querySelector('.score__digit-inner')?.textContent || '';
+            
+            if (oldDigitValue !== newDigitValue) {
+                this.animateDigit(digit);
+            }
+        });
+    }
+
+    private animateDigit(digit: Element): void {
+        const newNumber = digit.querySelector('.score__digit-inner')!.cloneNode(true) as HTMLElement;
+        newNumber.style.position = 'absolute';
+        newNumber.style.top = '100%';
+        digit.appendChild(newNumber);
+        
+        digit.classList.add('score__digit--rolling');
+        
+        setTimeout(() => {
+            digit.classList.remove('score__digit--rolling');
+            newNumber.remove();
+        }, this.animationDuration);
+    }
+
+    private startSimulation(): void {
+        // Incrementa il punteggio ogni 500ms
+        this.intervalIds.push(window.setInterval(() => {
+            const increment = Math.floor(Math.random() * 1000900);
+            this.score = this._score + increment;
+        }, 500));
+
+        // Simula cambiamenti nella vita
+        this.intervalIds.push(window.setInterval(() => {
+            const newHealth = Math.max(1, Math.floor(Math.random() * this.maxHealth) + 1);
+            this.health = newHealth;
+        }, 500));
+    }
+
+    private stopSimulation(): void {
+        this.intervalIds.forEach(id => window.clearInterval(id));
+        this.intervalIds.length = 0;
+    }
+
+    // Public methods
+    mount(): void {
+        document.body.appendChild(this.container);
+        this.startSimulation();
+    }
+
+    unmount(): void {
+        this.stopSimulation();
+        this.container.remove();
+    }
+} 
