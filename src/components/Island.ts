@@ -1,7 +1,7 @@
 import { Asset } from '@three.ez/main';
 import { Group, Object3D, Vector3 } from 'three';
 import { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { Pane } from 'tweakpane';
+import { DEBUG } from '../config/debug';
 
 Asset.preload(GLTFLoader, 'assets/models/island.glb'); // Preload the island model when import this component
 
@@ -18,8 +18,8 @@ export class Island extends Group {
 
         this.add(...gltf.scene.children);
 
-        const pane = new Pane();
-        const folder = pane.addFolder({ title: 'Island' });
+       
+        const folder = DEBUG.addFolder({ title: 'Island' });
         folder.addBinding(this, 'scale');
         folder.addBinding(this, 'rotation');
         folder.addBinding(this, 'position');

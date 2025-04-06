@@ -1,5 +1,5 @@
 import { Asset } from "@three.ez/main";
-import { Group, Vector3, AnimationMixer, AnimationClip, AnimationAction } from "three";
+import { Group, Vector3, AnimationMixer, AnimationClip, AnimationAction, Euler } from "three";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export type CharacterName = 'Anne' | 'Captain_Barbarossa' | 'Henry' | 'Mako' | 'Shark' | 'Sharky' | 'Skeleton_Headless' | 'Skeleton' | 'Tentacle';
@@ -35,7 +35,7 @@ export class Characters extends Group {
      * @param name - The name of the character model to load
      * @param position - The initial position of the character
      */
-    constructor(name: CharacterName, position: Vector3) {
+    constructor(name: CharacterName, {position, rotation}: {position: Vector3, rotation: Euler}) {
         super();
         this.name = name;
         // load model based on name
@@ -47,6 +47,7 @@ export class Characters extends Group {
         this.animationClips = model.animations;
 
         this.position.copy(position);
+        this.rotation.copy(rotation);
         
         // Start with idle animation
         this.playAnimation('Idle');
@@ -92,6 +93,7 @@ export class Characters extends Group {
         } else if (this.currentAnimation === 'Walk') {
             this.playAnimation('Idle');
         }
+        this.position.z += 0.01;
     }
     
     /**
@@ -104,6 +106,7 @@ export class Characters extends Group {
         } else if (this.currentAnimation === 'Walk') {
             this.playAnimation('Idle');
         }
+        this.position.z -= 0.01;
     }
     
     /**
@@ -116,6 +119,7 @@ export class Characters extends Group {
         } else if (this.currentAnimation === 'Walk') {
             this.playAnimation('Idle');
         }
+        this.position.x -= 0.01;
     }
     
     /**
@@ -128,6 +132,7 @@ export class Characters extends Group {
         } else if (this.currentAnimation === 'Walk') {
             this.playAnimation('Idle');
         }
+        this.position.x += 0.01;
     }
     
     /**
@@ -139,12 +144,15 @@ export class Characters extends Group {
         setTimeout(() => {
             this.playAnimation('Jump_Idle');
             setTimeout(() => {
+                this.position.y += 0.1;
                 this.playAnimation('Jump_Land');
                 setTimeout(() => {
+                    this.position.y -= 0.1;
                     this.playAnimation('Idle');
                 }, 500);
             }, 500);
         }, 500);
+      
     }
     
     /**

@@ -7,6 +7,7 @@ import { LevelSelect } from './ui/overlays/LevelSelect';
 import './ui/styles/progress-bar.css';
 import './ui/styles/ui.css';
 import { ProgressManager } from './ui/ProgressManager';
+import { FPSControls } from './controls/FPSControls';
 
 
 const progressBar = new ProgressManager();
@@ -21,14 +22,25 @@ await Asset.preloadAllPending({
 progressBar.hideProgressBar();
 
 const mainScene = new MainScene();
-const light = new DirectionalLight(0xffffff, 1);
-light.position.set(0, 1, 0);
-mainScene.addLight(light);
+
+
 
 const camera = new PerspectiveCameraAuto(CAMERA_CONFIG.fov)
     .translateZ(CAMERA_CONFIG.translateZ)
     .translateX(CAMERA_CONFIG.translateX)
     .translateY(CAMERA_CONFIG.translateY);
+
+
+
+
+const controls = new FPSControls(camera, mainScene.player);
+
+
+const light = new DirectionalLight(0xffffff, 1);
+light.position.set(0, 1, 0);
+mainScene.addLight(light);
+
+
 
 const main = new Main();
 main.createView({ scene: mainScene, camera });
