@@ -1,23 +1,40 @@
-import './style';
-import './ui/styles/ui.css';
-import { PerspectiveCameraAuto } from '@three.ez/main';
-import { Main } from '@three.ez/main';
-import { MainScene } from './scenes/MainScene';
+import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
+import { DirectionalLight } from 'three';
 import { CAMERA_CONFIG } from './config/constants';
-import { GameHUD } from './ui/overlays/GameHUD';
+import { MainScene } from './scenes/MainScene';
+import './style';
 import { LevelSelect } from './ui/overlays/LevelSelect';
+import './ui/styles/progress-bar.css';
+import './ui/styles/ui.css';
+import { ProgressManager } from './ui/ProgressManager';
 
-const scene = new MainScene();
+
+const progressBar = new ProgressManager();
+
+// Preload assets with progress tracking
+await Asset.preloadAllPending({
+    onProgress: (e) => {
+        progressBar.updateProgress(e);
+    },
+    onError: (e) => console.error(e)
+});
+progressBar.hideProgressBar();
+
+const mainScene = new MainScene();
+const light = new DirectionalLight(0xffffff, 1);
+light.position.set(0, 1, 0);
+mainScene.addLight(light);
+
 const camera = new PerspectiveCameraAuto(CAMERA_CONFIG.fov)
-    .translateZ(CAMERA_CONFIG.distance);
+    .translateZ(CAMERA_CONFIG.translateZ)
+    .translateX(CAMERA_CONFIG.translateX)
+    .translateY(CAMERA_CONFIG.translateY);
 
 const main = new Main();
-main.createView({ scene, camera });
-main.showStats = false;
+main.createView({ scene: mainScene, camera });
 
-// Inizializza il LevelSelect
+// Initialize LevelSelect but keep it hidden during loading
 const levelSelect = new LevelSelect();
 levelSelect.mount();
+document.querySelector('.level-select-overlay')?.classList.add('hidden');
 
-// Inizializza il GameHUD ma non mostrarlo ancora
-const gameHUD = new GameHUD();

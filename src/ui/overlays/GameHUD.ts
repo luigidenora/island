@@ -14,7 +14,7 @@ export class GameHUD {
 
     constructor() {
         this.container = document.createElement('div');
-        this.container.className = 'hud';
+        this.container.className = 'hud hidden';
         
         // Create avatar hexagon
         const avatarHex = document.createElement('div');
@@ -158,5 +158,13 @@ export class GameHUD {
     unmount(): void {
         this.stopSimulation();
         this.container.remove();
+    }
+    
+    show(): void {
+        this.container.classList.remove('hidden');
+    }
+    
+    hide(): void {
+        this.container.classList.add('hidden');
     }
 } 

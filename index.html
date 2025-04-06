@@ -15,8 +15,17 @@
             display: block;
         }
     </style>
+    <link rel="stylesheet" href="/src/ui/styles/progress-bar.css">
 </head>
 <body>
+    <div id="progress-container" class="progress-container">
+        <div class="progress-icon">🏴‍☠️</div>
+        <div class="progress-title">Loading Treasure...</div>
+        <div class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <div id="progress-text" class="progress-text">0%</div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
 </body>
 </html> 

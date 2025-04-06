@@ -1,0 +1,97 @@
+/* Pirate Progress Bar Styles */
+.progress-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 600px;
+    background-color: rgba(25, 25, 35, 0.95);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.25);
+    border: 3px solid #FFB627;
+    z-index: 1000;
+    transition: opacity 0.5s ease;
+}
+
+.progress-title {
+    color: #fff;
+    font-family: 'monospace', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 1.5rem;
+    text-align: center;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 0px #b27e15;
+}
+
+.progress-bar-container {
+    height: 30px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid #b27e15;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #FFB627, #b27e15);
+    border-radius: 15px;
+    transition: width 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ffffff" opacity="0.2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>');
+    background-size: 20px 20px;
+    animation: progress-wave 1s linear infinite;
+}
+
+.progress-text {
+    color: #fff;
+    font-family: 'monospace', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 1rem;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.progress-icon {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 3rem;
+    animation: float 2s ease-in-out infinite;
+}
+
+/* Hidden class for UI elements */
+.hidden {
+    display: none !important;
+}
+
+@keyframes progress-wave {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 20px 0;
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateX(-50%) translateY(0);
+    }
+    50% {
+        transform: translateX(-50%) translateY(-10px);
+    }
+} 
