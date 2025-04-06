@@ -16,11 +16,11 @@ export class GameHUD {
         this.container = document.createElement('div');
         this.container.className = 'hud';
         
-        // Crea l'avatar hexagon
+        // Create avatar hexagon
         const avatarHex = document.createElement('div');
         avatarHex.className = 'avatar-hex';
         
-        // Crea il contenitore dello score con label
+        // Create score container with label
         this.scoreContainer = document.createElement('div');
         this.scoreContainer.className = 'score';
         
@@ -38,7 +38,7 @@ export class GameHUD {
         
         this.init();
 
-        // Aggiungi gli elementi al container nell'ordine corretto per la grid
+        // Add elements to container in correct grid order
         this.container.append(
             avatarHex,
             this.healthElement,
@@ -47,7 +47,7 @@ export class GameHUD {
     }
 
     private init(): void {
-        // Imposta i valori iniziali
+        // Set initial values
         this.health = this._health;
         this.score = this._score;
     }
@@ -91,8 +91,8 @@ export class GameHUD {
     }
 
     private createRollingNumber(value: number): string {
-        return value.toString().padStart(4, '0').split('').map(digit => 
-            `<span class="score__digit">
+        return value.toString().padStart(4, '0').split('').map((digit, index) => 
+            `<span class="score__digit" style="--digit-index: ${index + 1}">
                 <span class="score__digit-inner">${digit}</span>
             </span>`
         ).join('');
@@ -131,13 +131,13 @@ export class GameHUD {
     }
 
     private startSimulation(): void {
-        // Incrementa il punteggio ogni 500ms
+        // Increment score every 500ms
         this.intervalIds.push(window.setInterval(() => {
             const increment = Math.floor(Math.random() * 1000900);
             this.score = this._score + increment;
         }, 500));
 
-        // Simula cambiamenti nella vita
+        // Simulate health changes
         this.intervalIds.push(window.setInterval(() => {
             const newHealth = Math.max(1, Math.floor(Math.random() * this.maxHealth) + 1);
             this.health = newHealth;

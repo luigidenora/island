@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Always use English comments
+# Your rule content
+
+- You can @ files here
+- You can use markdown but dont have to

@@ -21,9 +21,9 @@ export class LevelSelect {
         const grid = document.createElement('div');
         grid.className = 'level-grid';
 
-        // Crea 4 livelli (puoi modificare il numero in base alle tue esigenze)
+        // Create 4 levels (you can modify the number based on your needs)
         for (let i = 1; i <= 4; i++) {
-            const isLocked = i > 2; // Esempio: blocca i livelli 3 e 4
+            const isLocked = i > 2; // Example: lock levels 3 and 4
             const levelBtn = new LevelButton(i, isLocked);
             
             if (!isLocked) {
@@ -37,11 +37,11 @@ export class LevelSelect {
     }
 
     private startLevel(levelNumber: number) {
-        // Nascondi il level select
+        // Hide level select
         this.hide();
-        // Mostra il GameHUD
+        // Show GameHUD
         this.gameHUD.mount();
-        // Qui puoi aggiungere la logica per caricare il livello specifico
+        // Here you can add logic to load the specific level
         console.log(`Starting level ${levelNumber}`);
     }
 
