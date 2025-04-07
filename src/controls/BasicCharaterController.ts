@@ -363,6 +363,15 @@ export class RunState extends CharacterState {
 }
 
 export class SwordState extends CharacterState {
+
+  private _finishedCallback = () => {
+    this._finished();
+  }
+
+  private _cleanupCallback = () => {
+    this._cleanup();
+  }
+
   get name(): CharacterAnimationName { return 'Sword' }
 
   enter(prevState: CharacterState) {
