@@ -12,10 +12,10 @@ export class ProgressManager {
 
     public updateProgress(percent: number): void {
         if (this.progressBar) {
-            this.progressBar.style.width = `${percent}%`;
+            this.progressBar.style.width = `${percent * 100}%`;
         }
         if (this.progressText) {
-            this.progressText.textContent = `${percent}%`;
+            this.progressText.textContent = `${percent * 100}%`;
         }
     }
 
@@ -33,4 +33,4 @@ export class ProgressManager {
             }, 500);
         }
     }
-} 
+}

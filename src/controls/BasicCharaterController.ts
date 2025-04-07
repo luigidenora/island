@@ -37,6 +37,7 @@ export class BasicCharatterController {
   private _animations: CharacterAnimations;
   private _mixer: AnimationMixer
   private _position = new Vector3();
+  private _rotation = new Quaternion();
 
   constructor(private _character: Characters) {
     this._mixer = new AnimationMixer(this._character);
@@ -54,9 +55,20 @@ export class BasicCharatterController {
     this._stateMachine = new CharaterStateMachine(new BasicCharacterControllerProxy(this._animations));
 
     this._stateMachine.setState('Idle');
+    
+    this._position.copy(this._character.position);
+    this._rotation.copy(this._character.quaternion);
+    
+    // Log per debug
+    console.log("BasicCharatterController initialized", {
+      characterPosition: this._character.position,
+      characterRotation: this._character.quaternion
+    });
   }
 
   public get position(): Vector3{
+    // Update position from character
+    this._position.copy(this._character.position);
     return this._position;
   }
 
@@ -64,7 +76,9 @@ export class BasicCharatterController {
     if(!this._character){
       return new Quaternion();
     }
-    return this._character.quaternion
+    // Update rotation from character
+    this._rotation.copy(this._character.quaternion);
+    return this._rotation;
   }
 
   /**
@@ -141,10 +155,21 @@ export class BasicCharatterController {
       controlObject.position.add(forward);
       controlObject.position.add(sideways);
 
-      oldPosition.copy(controlObject.position);
+      // Aggiorna la posizione e la rotazione
+      this._position.copy(controlObject.position);
+      this._rotation.copy(controlObject.quaternion);
 
       if (this._mixer) {
         this._mixer.update(timeInSeconds);
+      }
+      
+      // Log per debug (solo ogni 60 frame per non sovraccaricare la console)
+      if (Math.random() < 0.01) {
+        console.log("Character update", {
+          characterPosition: this._character.position,
+          characterRotation: this._character.quaternion,
+          velocity: velocity
+        });
       }
   }
 
