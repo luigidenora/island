@@ -6,13 +6,15 @@ import { DEBUG } from '../config/debug';
 Asset.preload(GLTFLoader, 'assets/models/island.glb'); // Preload the island model when import this component
 
 export class Island extends Group {
-    private playerSpawnPoint: Vector3 | null = null;
-    private enemySpawnPoint: Vector3 | null = null;
+    /**
+     * Disable the island from being intercepted by the raycaster (so many objects are children of the island)
+     */
+    public interceptByRaycaster: boolean = false;
 
     constructor() {
         super();
         const gltf = Asset.get<GLTF>('assets/models/island.glb');
-        
+
         console.assert(!!gltf, 'Island model not found in assets');
         console.assert(gltf.scene.children[0] instanceof Object3D, 'Island model has no children');
 
