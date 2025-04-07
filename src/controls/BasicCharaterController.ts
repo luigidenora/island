@@ -1,4 +1,4 @@
-import { AnimationMixer, LoopOnce, Vector3 } from "three";
+import { AnimationMixer, LoopOnce, Quaternion, Vector3 } from "three";
 import { Characters } from "../components/Characters";
 import { CharacterAnimationName, CharacterAnimations, isValidAnimationName } from "../config/types";
 
@@ -35,9 +35,10 @@ export class BasicCharatterController {
   private _velocity = new Vector3(0, 0, 0);
   private _animations: CharacterAnimations;
   private _mixer: AnimationMixer
-
+   
   constructor(private _character: Characters) {
-    this._mixer = new AnimationMixer(this._character.children[0]);
+    this._mixer = new AnimationMixer(this._character);
+    debugger
     this._animations = this._character.animations.reduce((acc, animation) => {
       const name = animation.name as CharacterAnimationName;
       console.assert(isValidAnimationName(name), `Animation ${name} not found in character animations`);
@@ -48,13 +49,98 @@ export class BasicCharatterController {
       return acc;
     }, {} as CharacterAnimations);
 
+    debugger;
     this._stateMachine = new CharaterStateMachine(new BasicCharacterControllerProxy(this._animations));
+
+    this._stateMachine.setState('Idle');
   }
+
+
+  /**
+   * Updates the character controller state and animations.
+   * Handles movement, rotation and state transitions based on input.
+   * @param timeInSeconds - The time elapsed since last update in seconds
+   */
+  update(timeInSeconds: number) {
+  if (!this._character) {
+    return;
+  }
+
+  this._stateMachine.update(timeInSeconds, this._input);
+
+  const velocity = this._velocity;
+  const frameDecceleration = new Vector3(
+      velocity.x * this._decceleration.x,
+      velocity.y * this._decceleration.y,
+      velocity.z * this._decceleration.z
+  );
+  frameDecceleration.multiplyScalar(timeInSeconds);
+  frameDecceleration.z = Math.sign(frameDecceleration.z) * Math.min(
+      Math.abs(frameDecceleration.z), Math.abs(velocity.z));
+
+  velocity.add(frameDecceleration);
+
+  const controlObject = this._character;
+  const _Q = new Quaternion();
+  const _A = new Vector3();
+  const _R = controlObject.quaternion.clone();
+
+  const acc = this._acceleration.clone();
+  if (this._input.keys.shift) {
+    acc.multiplyScalar(2.0);
+  }
+
+  if (this._stateMachine.currentState?.name == 'Sword') {
+    acc.multiplyScalar(0.0);
+  }
+
+  if (this._input.keys.forward) {
+    velocity.z += acc.z * timeInSeconds;
+  }
+  if (this._input.keys.backward) {
+    velocity.z -= acc.z * timeInSeconds;
+  }
+  if (this._input.keys.left) {
+    _A.set(0, 1, 0);
+    _Q.setFromAxisAngle(_A, 4.0 * Math.PI * timeInSeconds * this._acceleration.y);
+    _R.multiply(_Q);
+  }
+  if (this._input.keys.right) {
+    _A.set(0, 1, 0);
+    _Q.setFromAxisAngle(_A, 4.0 * -Math.PI * timeInSeconds * this._acceleration.y);
+    _R.multiply(_Q);
+  }
+
+  controlObject.quaternion.copy(_R);
+
+  const oldPosition = new Vector3();
+  oldPosition.copy(controlObject.position);
+
+  const forward = new Vector3(0, 0, 1);
+  forward.applyQuaternion(controlObject.quaternion);
+  forward.normalize();
+
+  const sideways = new Vector3(1, 0, 0);
+  sideways.applyQuaternion(controlObject.quaternion);
+  sideways.normalize();
+
+  sideways.multiplyScalar(velocity.x * timeInSeconds);
+  forward.multiplyScalar(velocity.z * timeInSeconds);
+
+  controlObject.position.add(forward);
+  controlObject.position.add(sideways);
+
+  oldPosition.copy(controlObject.position);
+
+  if (this._mixer) {
+    this._mixer.update(timeInSeconds);
+  }
+}
 
 }
 
 export class BasicCharatterControllerInput {
-  private _keys: CharacterInputKeys = {
+  public keys: CharacterInputKeys = {
     forward: false,
     backward: false,
     left: false,
@@ -69,47 +155,51 @@ export class BasicCharatterControllerInput {
   }
 
   private _onKeyDown(e: KeyboardEvent): void {
+    // some debug logging
+    console.log('keydown', e.code);
     switch (e.code) {
       case 'KeyW':
-        this._keys.forward = true;
+        this.keys.forward = true;
         break;
       case 'KeyS':
-        this._keys.backward = true;
+        this.keys.backward = true;
         break;
       case 'KeyA':
-        this._keys.left = true;
+        this.keys.left = true;
         break;
       case 'KeyD':
-        this._keys.right = true;
+        this.keys.right = true;
         break;
       case 'Shift':
-        this._keys.shift = true
+        this.keys.shift = true
         break;
       case 'Space':
-        this._keys.space = true
+        this.keys.space = true
         break;
     }
   }
 
   private _onKeyUp(e: KeyboardEvent): void {
+    // some debug logging
+    console.log('keyup', e.code);
     switch (e.code) {
       case 'KeyW':
-        this._keys.forward = false;
+        this.keys.forward = false;
         break;
       case 'KeyS':
-        this._keys.backward = false;
+        this.keys.backward = false;
         break;
       case 'KeyA':
-        this._keys.left = false;
+        this.keys.left = false;
         break;
       case 'KeyD':
-        this._keys.right = false;
+        this.keys.right = false;
         break;
       case 'Shift':
-        this._keys.shift = false
+        this.keys.shift = false
         break;
       case 'Space':
-        this._keys.space = false
+        this.keys.space = false
         break;
     }
   }
@@ -118,11 +208,11 @@ export class BasicCharatterControllerInput {
 
 export class FiniteStateMachine {
   private _states: Record<CharacterAnimationName, new (parent: FiniteStateMachine) => CharacterState> = {} as Record<CharacterAnimationName, new (parent: FiniteStateMachine) => CharacterState>;
-  private _currentState: CharacterState | null;
-  public _proxy!: BasicCharacterControllerProxy;
+  public currentState: CharacterState | null;
+  public proxy!: BasicCharacterControllerProxy;
 
   constructor() {
-    this._currentState = null;
+    this.currentState = null;
   }
 
   _addState(name: CharacterAnimationName, type: new (parent: FiniteStateMachine) => CharacterState) {
@@ -131,7 +221,7 @@ export class FiniteStateMachine {
 
   setState(name: CharacterAnimationName) {
 
-    const prevState = this._currentState;
+    const prevState = this.currentState;
 
     if (prevState) {
       if (prevState.name == name) {
@@ -142,7 +232,7 @@ export class FiniteStateMachine {
 
     const state = new this._states[name](this);
 
-    this._currentState = state;
+    this.currentState = state;
 
     if(prevState) {
       state.enter(prevState);
@@ -150,15 +240,15 @@ export class FiniteStateMachine {
 
   }
 
-  update(timeElapsed: number, input: CharacterInputKeys) {
-    if (this._currentState) {
-      this._currentState.update(timeElapsed, input);
+  update(timeElapsed: number, input: BasicCharatterControllerInput) {
+    if (this.currentState) {
+      this.currentState.update(timeElapsed, input);
     }
   }
 }
 
 class CharaterStateMachine extends FiniteStateMachine {
-  constructor(public _proxy: BasicCharacterControllerProxy) {
+  constructor(public proxy: BasicCharacterControllerProxy) {
     super();
     this._init();
   }
@@ -193,7 +283,7 @@ export abstract class CharacterState {
   }
   exit(): void {
   }
-  update(timeElapsed: number, input: CharacterInputKeys): void {
+  update(timeElapsed: number, input: BasicCharatterControllerInput): void {
   }
 }
 
@@ -202,9 +292,9 @@ export class IdleState extends CharacterState {
     return 'Idle'
   }
   enter(prevState: CharacterState): void {
-    const idleAction = this._parent._proxy.animations['Idle'].action;
+    const idleAction = this._parent.proxy.animations['Idle'].action;
     if (prevState) {
-      const prevAction = this._parent._proxy.animations[prevState.name].action;
+      const prevAction = this._parent.proxy.animations[prevState.name].action;
       idleAction.time = 0.0;
       idleAction.enabled = true;
       idleAction.setEffectiveTimeScale(1.0);
@@ -219,10 +309,10 @@ export class IdleState extends CharacterState {
   exit(): void {
   }
 
-  update(timeElapsed: number, input: any): void {
-    if (input._move.forward || input._move.backward) {
+  update(timeElapsed: number, input: BasicCharatterControllerInput): void {
+    if (input.keys.forward || input.keys.backward) {
       this._parent.setState('Walk');
-    } else if (input._move.space) {
+    } else if (input.keys.space) {
       this._parent.setState('Sword');
     }
   }
@@ -236,9 +326,9 @@ export class RunState extends CharacterState {
   get name(): CharacterAnimationName { return 'Run' }
 
   enter(prevState: CharacterState) {
-    const curAction = this._parent._proxy.animations['Run'].action;
+    const curAction = this._parent.proxy.animations['Run'].action;
     if (prevState) {
-      const prevAction = this._parent._proxy.animations[prevState.name].action;
+      const prevAction = this._parent.proxy.animations[prevState.name].action;
 
       curAction.enabled = true;
       if (prevState.name == 'Walk') {
@@ -260,9 +350,9 @@ export class RunState extends CharacterState {
 
   }
 
-  update(timeElapsed: number, input:any) {
-    if (input._move.forward || input._move.backward) {
-      if (!input._move.shift) {
+  update(timeElapsed: number, input: BasicCharatterControllerInput) {
+    if (input.keys.forward || input.keys.backward) {
+      if (!input.keys.shift) {
         this._parent.setState('Walk');
       }
       return;
@@ -276,12 +366,12 @@ export class SwordState extends CharacterState {
   get name(): CharacterAnimationName { return 'Sword' }
 
   enter(prevState: CharacterState) {
-    const curAction = this._parent._proxy.animations['Sword'].action;
+    const curAction = this._parent.proxy.animations['Sword'].action;
     const mixer = curAction.getMixer();
     mixer.addEventListener('finished', this._finishedCallback);
 
     if (prevState) {
-      const prevAction = this._parent._proxy.animations[prevState.name].action;
+      const prevAction = this._parent.proxy.animations[prevState.name].action;
 
       curAction.reset();
       curAction.setLoop(LoopOnce, 1);
@@ -300,7 +390,7 @@ export class SwordState extends CharacterState {
   }
 
   _cleanup() {
-    const action = this._parent._proxy.animations['Sword'].action;
+    const action = this._parent.proxy.animations['Sword'].action;
 
     action.getMixer().removeEventListener('finished', this._cleanupCallback);
   }
@@ -319,9 +409,9 @@ export class WalkState extends CharacterState {
   get name(): CharacterAnimationName { return 'Walk' }
 
   enter(prevState: CharacterState) {
-    const curAction = this._parent._proxy.animations['Walk'].action;
+    const curAction = this._parent.proxy.animations['Walk'].action;
     if (prevState) {
-      const prevAction = this._parent._proxy.animations[prevState.name].action;
+      const prevAction = this._parent.proxy.animations[prevState.name].action;
 
       curAction.enabled = true;
       if (prevState.name == 'Run') {
@@ -344,9 +434,9 @@ export class WalkState extends CharacterState {
   }
 
 
-  update(timeElapsed: number, input: any) {
-    if (input._move.forward || input._move.backward) {
-      if (input._move.shift) {
+  update(timeElapsed: number, input: BasicCharatterControllerInput) {
+    if (input.keys.forward || input.keys.backward) {
+      if (input.keys.shift) {
         this._parent.setState('Run');
       }
       return;

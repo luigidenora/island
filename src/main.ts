@@ -1,4 +1,4 @@
-import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
+import { AnimateEvent, Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { DirectionalLight } from 'three';
 import { CAMERA_CONFIG } from './config/constants';
 import { MainScene } from './scenes/MainScene';
@@ -8,6 +8,7 @@ import './ui/styles/progress-bar.css';
 import './ui/styles/ui.css';
 import { ProgressManager } from './ui/ProgressManager';
 import { BasicCharatterController } from './controls/BasicCharaterController';
+import { DEBUG } from './config/debug';
 
 const progressBar = new ProgressManager();
 
@@ -30,10 +31,23 @@ const camera = new PerspectiveCameraAuto(CAMERA_CONFIG.fov)
     .translateY(CAMERA_CONFIG.translateY);
 
 
+const cameraFolder = DEBUG.addFolder({
+    title: 'Camera'
+});
+cameraFolder.addBinding(camera, 'fov');
+cameraFolder.addBinding(camera, 'position');
+cameraFolder.addBinding(camera, 'rotation');
+cameraFolder.addBinding(camera, 'up');
+cameraFolder.addBinding(camera, 'near');
+cameraFolder.addBinding(camera, 'far');
+
 
 
 const controls = new BasicCharatterController(mainScene.player);
 
+mainScene.on('animate', (event) => {
+    controls.update(event?.delta ?? 0);
+});
 
 const light = new DirectionalLight(0xffffff, 1);
 light.position.set(0, 1, 0);
