@@ -36,10 +36,11 @@ export class BasicCharatterController {
   private _velocity = new Vector3(0, 0, 0);
   private _animations: CharacterAnimations;
   private _mixer: AnimationMixer
-   
+  private _position = new Vector3();
+
   constructor(private _character: Characters) {
     this._mixer = new AnimationMixer(this._character);
-    debugger
+
     this._animations = this._character.animations.reduce((acc, animation) => {
       const name = animation.name as CharacterAnimationName;
       console.assert(isValidAnimationName(name), `Animation ${name} not found in character animations`);
@@ -50,93 +51,103 @@ export class BasicCharatterController {
       return acc;
     }, {} as CharacterAnimations);
 
-    debugger;
     this._stateMachine = new CharaterStateMachine(new BasicCharacterControllerProxy(this._animations));
 
     this._stateMachine.setState('Idle');
   }
 
-
-  /**
-   * Updates the character controller state and animations.
-   * Handles movement, rotation and state transitions based on input.
-   * @param timeInSeconds - The time elapsed since last update in seconds
-   */
-  update(timeInSeconds: number) {
-  if (!this._character) {
-    return;
+  public get position(): Vector3{
+    return this._position;
   }
 
-  this._stateMachine.update(timeInSeconds, this._input);
+  public get rotation(): Quaternion {
+    if(!this._character){
+      return new Quaternion();
+    }
+    return this._character.quaternion
+  }
 
-  const velocity = this._velocity;
-  const frameDecceleration = new Vector3(
+  /**
+    * Updates the character controller state and animations.
+    * Handles movement, rotation and state transitions based on input.
+    * @param timeInSeconds - The time elapsed since last update in seconds
+  */
+  update(timeInSeconds: number) {
+    if (!this._character) {
+      return;
+    }
+
+    this._stateMachine.update(timeInSeconds, this._input);
+
+    const velocity = this._velocity;
+    const frameDecceleration = new Vector3(
       velocity.x * this._decceleration.x,
       velocity.y * this._decceleration.y,
       velocity.z * this._decceleration.z
-  );
-  frameDecceleration.multiplyScalar(timeInSeconds);
-  frameDecceleration.z = Math.sign(frameDecceleration.z) * Math.min(
+    );
+    frameDecceleration.multiplyScalar(timeInSeconds);
+    frameDecceleration.z = Math.sign(frameDecceleration.z) * Math.min(
       Math.abs(frameDecceleration.z), Math.abs(velocity.z));
 
-  velocity.add(frameDecceleration);
+      velocity.add(frameDecceleration);
 
-  const controlObject = this._character;
-  const _Q = new Quaternion();
-  const _A = new Vector3();
-  const _R = controlObject.quaternion.clone();
+      const controlObject = this._character;
+      const _Q = new Quaternion();
+      const _A = new Vector3();
+      const _R = controlObject.quaternion.clone();
 
-  const acc = this._acceleration.clone();
-  if (this._input.keys.shift) {
-    acc.multiplyScalar(2.0);
+      const acc = this._acceleration.clone();
+      if (this._input.keys.shift) {
+        acc.multiplyScalar(2.0);
+      }
+
+      if (this._stateMachine.currentState?.name == 'Sword') {
+        acc.multiplyScalar(0.0);
+      }
+
+      if (this._input.keys.forward) {
+        velocity.z += acc.z * timeInSeconds;
+      }
+      if (this._input.keys.backward) {
+        velocity.z -= acc.z * timeInSeconds;
+      }
+      if (this._input.keys.left) {
+        _A.set(0, 1, 0);
+        _Q.setFromAxisAngle(_A, 4.0 * Math.PI * timeInSeconds * this._acceleration.y);
+        _R.multiply(_Q);
+      }
+      if (this._input.keys.right) {
+        _A.set(0, 1, 0);
+        _Q.setFromAxisAngle(_A, 4.0 * -Math.PI * timeInSeconds * this._acceleration.y);
+        _R.multiply(_Q);
+      }
+
+      controlObject.quaternion.copy(_R);
+
+      const oldPosition = new Vector3();
+      oldPosition.copy(controlObject.position);
+
+      const forward = new Vector3(0, 0, 1);
+      forward.applyQuaternion(controlObject.quaternion);
+      forward.normalize();
+
+      const sideways = new Vector3(1, 0, 0);
+      sideways.applyQuaternion(controlObject.quaternion);
+      sideways.normalize();
+
+      sideways.multiplyScalar(velocity.x * timeInSeconds);
+      forward.multiplyScalar(velocity.z * timeInSeconds);
+
+      controlObject.position.add(forward);
+      controlObject.position.add(sideways);
+
+      oldPosition.copy(controlObject.position);
+
+      if (this._mixer) {
+        this._mixer.update(timeInSeconds);
+      }
   }
 
-  if (this._stateMachine.currentState?.name == 'Sword') {
-    acc.multiplyScalar(0.0);
-  }
-
-  if (this._input.keys.forward) {
-    velocity.z += acc.z * timeInSeconds;
-  }
-  if (this._input.keys.backward) {
-    velocity.z -= acc.z * timeInSeconds;
-  }
-  if (this._input.keys.left) {
-    _A.set(0, 1, 0);
-    _Q.setFromAxisAngle(_A, 4.0 * Math.PI * timeInSeconds * this._acceleration.y);
-    _R.multiply(_Q);
-  }
-  if (this._input.keys.right) {
-    _A.set(0, 1, 0);
-    _Q.setFromAxisAngle(_A, 4.0 * -Math.PI * timeInSeconds * this._acceleration.y);
-    _R.multiply(_Q);
-  }
-
-  controlObject.quaternion.copy(_R);
-
-  const oldPosition = new Vector3();
-  oldPosition.copy(controlObject.position);
-
-  const forward = new Vector3(0, 0, 1);
-  forward.applyQuaternion(controlObject.quaternion);
-  forward.normalize();
-
-  const sideways = new Vector3(1, 0, 0);
-  sideways.applyQuaternion(controlObject.quaternion);
-  sideways.normalize();
-
-  sideways.multiplyScalar(velocity.x * timeInSeconds);
-  forward.multiplyScalar(velocity.z * timeInSeconds);
-
-  controlObject.position.add(forward);
-  controlObject.position.add(sideways);
-
-  oldPosition.copy(controlObject.position);
-
-  if (this._mixer) {
-    this._mixer.update(timeInSeconds);
-  }
-}
 
 }
 

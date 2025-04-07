@@ -1,4 +1,4 @@
-import { AnimateEvent, Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
+import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { DirectionalLight } from 'three';
 import { CAMERA_CONFIG } from './config/constants';
 import { MainScene } from './scenes/MainScene';
@@ -9,6 +9,7 @@ import './ui/styles/ui.css';
 import { ProgressManager } from './ui/ProgressManager';
 import { BasicCharatterController } from './controls/BasicCharaterController';
 import { DEBUG } from './config/debug';
+import { ThirdPersonCamera } from './controls/ThirdPersonCamera';
 
 const progressBar = new ProgressManager();
 
@@ -23,12 +24,8 @@ progressBar.hideProgressBar();
 
 const mainScene = new MainScene();
 
-
-
-const camera = new PerspectiveCameraAuto(CAMERA_CONFIG.fov)
-    .translateZ(CAMERA_CONFIG.translateZ)
-    .translateX(CAMERA_CONFIG.translateX)
-    .translateY(CAMERA_CONFIG.translateY);
+const camera = new PerspectiveCameraAuto(CAMERA_CONFIG.fov, CAMERA_CONFIG.near, CAMERA_CONFIG.far);
+camera.position.set(CAMERA_CONFIG.translateX, CAMERA_CONFIG.translateY, CAMERA_CONFIG.translateZ);
 
 
 const cameraFolder = DEBUG.addFolder({
@@ -41,9 +38,9 @@ cameraFolder.addBinding(camera, 'up');
 cameraFolder.addBinding(camera, 'near');
 cameraFolder.addBinding(camera, 'far');
 
-
-
 const controls = new BasicCharatterController(mainScene.player);
+
+const thirdPersonCamera = new ThirdPersonCamera({camera, target:controls});
 
 // only for test 
 const controls2 = new BasicCharatterController(mainScene.player2);
@@ -54,6 +51,8 @@ const controls5 = new BasicCharatterController(mainScene.player5);
 
 
 mainScene.on('animate', (event) => {
+
+    thirdPersonCamera.update(event?.delta ?? 0);
     controls.update(event?.delta ?? 0);
     // only for test 
     controls2.update(event?.delta ?? 0);

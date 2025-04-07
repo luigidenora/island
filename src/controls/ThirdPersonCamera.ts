@@ -1,30 +1,43 @@
-import { Vector3 } from "three";
+import { Camera, Vector3 } from "three";
+import { BasicCharatterController } from "./BasicCharaterController";
 
 export class ThirdPersonCamera { 
-  constructor(param){
-    this._params = params;
-    this._camera = params.camera;
+  private _camera: Camera;
+  private _currentPosition = new Vector3();
+  private _currentLookat = new Vector3();
 
-    this._currentPosition = new Vector3();
-    this._currentLookat = new Vector3();
+  constructor(private _params: {camera: Camera , target: BasicCharatterController}){
+    this._camera = this._params.camera;
   }
-  _CalculateIdalOffset() {
+
+  private _calculateIdalOffset() {
     const idealOffset = new Vector3(-15,20,-30);
-    idealOffset.applyQuaternion(this._params.target.Rotation);
-    idealOffset.add(this._params.target.Position)
+    idealOffset.applyQuaternion(this._params.target.rotation);
+    idealOffset.add(this._params.target.position);
+    return idealOffset;
   }
 
-  Update(timeElapsed){
-    const idealOffset = this._CalculateIdalOffset();
-    const idealLookat = this._CalculateIdalOffset();
+  private _calculateIdealLookat() {
+    const idealLookat = new Vector3(0, 10, 50);
+    idealLookat.applyQuaternion(this._params.target.rotation);
+    idealLookat.add(this._params.target.position);
+    return idealLookat;
+  }
 
-    this._currentPosition.copy(idealOffset);
-    this._currentLookat.copy(idealLookat);
+  update(timeElapsed:number){
+    const idealOffset = this._calculateIdalOffset();
+    const idealLookat = this._calculateIdealLookat();
 
 
-    this._camera.position.copy(this._currentPosition)
+    // const t = 0.05;
+    // const t = 4.0 * timeElapsed;
+    const t = 1.0 - Math.pow(0.001, timeElapsed);
+
+    this._currentPosition.lerp(idealOffset, t);
+    this._currentLookat.lerp(idealLookat, t);
+
+    this._camera.position.copy(this._currentPosition);
     this._camera.lookAt(this._currentLookat);
-
   }
 
 }
