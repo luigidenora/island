@@ -1,7 +1,6 @@
 import { Asset } from "@three.ez/main";
-import { Group, Vector3, AnimationMixer, AnimationClip, AnimationAction, Euler } from "three";
+import { Euler, Group, Vector3 } from "three";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { BasicCharatterController } from "../controls/BasicCharaterController";
 
 export type CharacterName = 'Anne' | 'Captain_Barbarossa' | 'Henry' | 'Mako' | 'Shark' | 'Sharky' | 'Skeleton_Headless' | 'Skeleton' | 'Tentacle';
 
