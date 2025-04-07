@@ -16,15 +16,16 @@ class BasicCharacterControllerProxy {
 };
 
 /**
- * Type definition for keyboard input state
+ * Type definition for any input
  */
-interface CharacterInputKeys {
+interface CharacterInput {
   forward: boolean;
   backward: boolean;
   left: boolean;
   right: boolean;
   space: boolean;
   shift: boolean;
+  mousePressed: boolean;
 }
 
 export class BasicCharatterController {
@@ -140,23 +141,36 @@ export class BasicCharatterController {
 }
 
 export class BasicCharatterControllerInput {
-  public keys: CharacterInputKeys = {
+  public keys: CharacterInput = {
     forward: false,
     backward: false,
     left: false,
     right: false,
     space: false,
     shift: false,
+    mousePressed: false
   }
 
   constructor() {
     document.addEventListener('keydown', (e) => this._onKeyDown(e), false);
     document.addEventListener('keyup', (e) => this._onKeyUp(e), false);
+    document.addEventListener('mousedown', (e) => this._onMouseDown(e), false);
+    document.addEventListener('mouseup', (e) => this._onMouseUp(e), false);
+  }
+
+  private _onMouseDown(e: MouseEvent): void {
+    if (e.button === 0) {
+      this.keys.mousePressed = true;
+    }
+  }
+
+  private _onMouseUp(e: MouseEvent): void {
+    if (e.button === 0) {
+      this.keys.mousePressed = false;
+    }
   }
 
   private _onKeyDown(e: KeyboardEvent): void {
-    // some debug logging
-    console.log('keydown', e.code);
     switch (e.code) {
       case 'KeyW':
         this.keys.forward = true;
@@ -180,8 +194,6 @@ export class BasicCharatterControllerInput {
   }
 
   private _onKeyUp(e: KeyboardEvent): void {
-    // some debug logging
-    console.log('keyup', e.code);
     switch (e.code) {
       case 'KeyW':
         this.keys.forward = false;
@@ -254,10 +266,11 @@ class CharaterStateMachine extends FiniteStateMachine {
   }
 
   _init() {
+    this._addState('Idle', IdleState);
+    this._addState('Walk', WalkState);
     this._addState('Death', DeathState);
     this._addState('Duck', DuckState);
     this._addState('HitReact', HitReactState);
-    this._addState('Idle', IdleState);
     this._addState('Jump', JumpState);
     this._addState('Jump_Idle', JumpIdleState);
     this._addState('Jump_Land', JumpLandState);
@@ -265,7 +278,6 @@ class CharaterStateMachine extends FiniteStateMachine {
     this._addState('Punch', PunchState);
     this._addState('Run', RunState);
     this._addState('Sword', SwordState);
-    this._addState('Walk', WalkState);
     this._addState('Wave', WaveState);
     this._addState('Yes', YesState);
   }
@@ -273,16 +285,54 @@ class CharaterStateMachine extends FiniteStateMachine {
 
 
 export abstract class CharacterState {
-
   public abstract get name(): CharacterAnimationName;
 
   constructor(protected _parent: FiniteStateMachine) {
   }
 
-  enter(prevState: CharacterState): void {
+  private __finishedCallback = () => {
+    this._finished();
   }
-  exit(): void {
+
+  private __cleanupCallback = () => {
+    this._cleanup();
   }
+
+  enter(prevState: CharacterState) {
+    const curAction = this._parent.proxy.animations[this.name].action;
+    const mixer = curAction.getMixer();
+    mixer.addEventListener('finished', this.__finishedCallback);
+
+    if (prevState) {
+      const prevAction = this._parent.proxy.animations[prevState.name].action;
+
+      curAction.reset();
+      curAction.setLoop(LoopOnce, 1);
+      curAction.clampWhenFinished = true;
+      curAction.crossFadeFrom(prevAction, 0.5, true);
+      curAction.play();
+    } else {
+      curAction.play();
+    }
+
+  }
+
+  _finished() {
+    this._cleanup();
+    this._parent.setState('Idle');
+  }
+
+  _cleanup() {
+    const action = this._parent.proxy.animations[this.name].action;
+
+    action.getMixer().removeEventListener('finished', this.__cleanupCallback);
+  }
+
+
+  exit() {
+    this._cleanup();
+  }
+
   update(timeElapsed: number, input: BasicCharatterControllerInput): void {
   }
 }
@@ -313,6 +363,8 @@ export class IdleState extends CharacterState {
     if (input.keys.forward || input.keys.backward) {
       this._parent.setState('Walk');
     } else if (input.keys.space) {
+      this._parent.setState('Jump');
+    } else if (input.keys.mousePressed) {
       this._parent.setState('Sword');
     }
   }
@@ -320,9 +372,6 @@ export class IdleState extends CharacterState {
 }
 
 export class RunState extends CharacterState {
-  exit(): void {
-    throw new Error("Method not implemented.");
-  }
   get name(): CharacterAnimationName { return 'Run' }
 
   enter(prevState: CharacterState) {
@@ -331,6 +380,7 @@ export class RunState extends CharacterState {
       const prevAction = this._parent.proxy.animations[prevState.name].action;
 
       curAction.enabled = true;
+
       if (prevState.name == 'Walk') {
         const ratio = curAction.getClip().duration / prevAction.getClip().duration;
         curAction.time = prevAction.time * ratio;
@@ -348,6 +398,9 @@ export class RunState extends CharacterState {
       curAction.play();
     }
 
+  }
+
+  exit(): void {
   }
 
   update(timeElapsed: number, input: BasicCharatterControllerInput) {

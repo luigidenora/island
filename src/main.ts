@@ -45,8 +45,21 @@ cameraFolder.addBinding(camera, 'far');
 
 const controls = new BasicCharatterController(mainScene.player);
 
+// only for test 
+const controls2 = new BasicCharatterController(mainScene.player2);
+const controls3 = new BasicCharatterController(mainScene.player3);
+const controls4 = new BasicCharatterController(mainScene.player4);
+const controls5 = new BasicCharatterController(mainScene.player5);
+
+
+
 mainScene.on('animate', (event) => {
     controls.update(event?.delta ?? 0);
+    // only for test 
+    controls2.update(event?.delta ?? 0);
+    controls3.update(event?.delta ?? 0);
+    controls4.update(event?.delta ?? 0);
+    controls5.update(event?.delta ?? 0);
 });
 
 const light = new DirectionalLight(0xffffff, 1);
