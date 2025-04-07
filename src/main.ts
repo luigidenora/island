@@ -7,8 +7,7 @@ import { LevelSelect } from './ui/overlays/LevelSelect';
 import './ui/styles/progress-bar.css';
 import './ui/styles/ui.css';
 import { ProgressManager } from './ui/ProgressManager';
-import { FPSControls } from './controls/FPSControls';
-
+import { BasicCharatterController } from './controls/BasicCharaterController';
 
 const progressBar = new ProgressManager();
 
@@ -33,7 +32,7 @@ const camera = new PerspectiveCameraAuto(CAMERA_CONFIG.fov)
 
 
 
-const controls = new FPSControls(camera, mainScene.player);
+const controls = new BasicCharatterController(mainScene.player);
 
 
 const light = new DirectionalLight(0xffffff, 1);
