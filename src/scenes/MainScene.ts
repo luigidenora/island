@@ -1,49 +1,42 @@
-import { Object3D, Scene } from 'three';
+import { AmbientLight, Color, DirectionalLight, Fog, HemisphereLight, Object3D, Scene } from 'three';
 import { Characters } from '../components/Characters';
 import { Island } from '../components/Island';
 
 export class MainScene extends Scene {
-    private island: Island;
-    public player: Characters;
+  private island: Island;
+  public player: Characters;
 
-    // test only 
-    player2: Characters;
-    player3: Characters;
-    player4: Characters;
-    player5: Characters;    
+  constructor() {
+    super();
 
-    constructor() {
-        super();
+    this.island = new Island(); 
+    this.add(this.island);
 
-        this.island = new Island(); 
-        this.add(this.island);
-        
-        // Find player spawn point
-        const spawnPoint = this.island.querySelector('[name=@Player_Spawn]');
-        console.assert(!!spawnPoint, 'Player spawn point not found');
-        this.island.remove(spawnPoint);
+    // Find player spawn point
+    const spawnPoint = this.island.querySelector('[name=@Player_Spawn]');
+    console.assert(!!spawnPoint, 'Player spawn point not found');
+    this.island.remove(spawnPoint);
 
-        // Create player at spawn point
-        this.player = new Characters('Captain_Barbarossa', spawnPoint);
-        this.add(this.player);
+    // Create player at spawn point
+    this.player = new Characters('Captain_Barbarossa', spawnPoint);
+    this.add(this.player);
 
-        // test only 
-        this.player2 = new Characters('Anne', spawnPoint.clone().translateX(2));
-        this.add(this.player2);
+    this._addLight();
+  }  
 
-        this.player3 = new Characters('Henry', spawnPoint.clone().translateX(4));
-        this.add(this.player3);
+  private _addLight(){
 
-        this.player4 = new Characters('Skeleton_Headless', spawnPoint.clone().translateX(6));
-        this.add(this.player4);
+    this.background = new Color().setHSL( 0.6, 0, 1 );
+    this.fog = new Fog( this.background, 1, 5000 );
 
-        this.player5 = new Characters('Sharky', spawnPoint.clone().translateX(8));
-        this.add(this.player5);
-        
-    }   
+    const hemiLight = new HemisphereLight( 0x0000ff, 0x00ff00, 0.6 );
+     hemiLight.color.setHSL(0.6,1,0.6)
+     hemiLight.groundColor.setHSL(0.095,1,0.75)
+     hemiLight.position.set(0,50,0)
 
-    public addLight(light: Object3D) {
-        this.add(light);
-    }
+    const dirLight = new DirectionalLight(0xffffff, 5)
+
+    this.add(hemiLight, dirLight);
+  }
 
 } 

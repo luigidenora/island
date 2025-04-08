@@ -1,70 +1,104 @@
 import { Camera, Vector3 } from "three";
 import { BasicCharatterController } from "./BasicCharaterController";
+import { DEBUG } from "../config/debug";
 
 export class ThirdPersonCamera { 
+  private _params: {camera: Camera, target: BasicCharatterController};
   private _camera: Camera;
-  private _target: BasicCharatterController;
-  private _offset = new Vector3(-10, 5, -20);
-  private _lookAtOffset = new Vector3(0, 2, 20);
+  private _currentPosition: Vector3;
+  private _currentLookat: Vector3;
+  private _offset: Vector3;
+  private _lookAtOffset: Vector3;
 
   constructor(params: {camera: Camera, target: BasicCharatterController}) {
+    this._params = params;
     this._camera = params.camera;
-    this._target = params.target;
     
-    // Inizializza la posizione della camera
-    this.updateCameraPosition();
+    this._currentPosition = new Vector3();
+    this._currentLookat = new Vector3();
+    this._offset = new Vector3(-1.0, 1.5, -2.5);
+    this._lookAtOffset = new Vector3(0.0, 1.5, 10.0);
+
+    this._currentPosition.copy(this._calculateIdealOffset());
+    this._currentLookat.copy(this._calculateIdealLookat());
+    this._camera.position.copy(this._currentPosition);
+    this._camera.lookAt(this._currentLookat);
+
+    // this._setupTweakpane();
+  }
+
+  private _calculateIdealOffset(): Vector3 {
+    const idealOffset = this._offset.clone();
+    idealOffset.applyQuaternion(this._params.target.rotation);
+    idealOffset.add(this._params.target.position);
+    return idealOffset;
+  }
+
+  private _calculateIdealLookat(): Vector3 {
+    const idealLookat = this._lookAtOffset.clone();
+    idealLookat.applyQuaternion(this._params.target.rotation);
+    idealLookat.add(this._params.target.position);
+    return idealLookat;
+  }
+
+  private _setupTweakpane() {
+    const folder = DEBUG.addFolder({ title: 'Camera Controls' });
     
-    // Log per debug
-    console.log("ThirdPersonCamera initialized", {
-      cameraPosition: this._camera.position,
-      targetPosition: this._target.position
+    // Camera offset controls
+    const offsetFolder = folder.addFolder({ title: 'Camera Offset' });
+    offsetFolder.addBinding(this._offset, 'x', { 
+      label: 'X Offset', 
+      min: -20, 
+      max: 20, 
+      step: 0.5 
+    });
+    offsetFolder.addBinding(this._offset, 'y', { 
+      label: 'Y Offset', 
+      min: 0, 
+      max: 10, 
+      step: 0.5 
+    });
+    offsetFolder.addBinding(this._offset, 'z', { 
+      label: 'Z Offset', 
+      min: -30, 
+      max: 0, 
+      step: 0.5 
+    });
+    
+    // Look at offset controls
+    const lookAtFolder = folder.addFolder({ title: 'Look At Offset' });
+    lookAtFolder.addBinding(this._lookAtOffset, 'x', { 
+      label: 'X Look At', 
+      min: -10, 
+      max: 10, 
+      step: 0.5 
+    });
+    lookAtFolder.addBinding(this._lookAtOffset, 'y', { 
+      label: 'Y Look At', 
+      min: 0, 
+      max: 5, 
+      step: 0.5 
+    });
+    lookAtFolder.addBinding(this._lookAtOffset, 'z', { 
+      label: 'Z Look At', 
+      min: 0, 
+      max: 30, 
+      step: 0.5 
     });
   }
 
   update(timeElapsed: number) {
-    // Aggiorna la posizione della camera
-    this.updateCameraPosition();
-    
-    // Log per debug (solo ogni 60 frame per non sovraccaricare la console)
-    if (Math.random() < 0.01) {
-      console.log("Camera update", {
-        cameraPosition: this._camera.position,
-        targetPosition: this._target.position,
-        targetRotation: this._target.rotation
-      });
-    }
-  }
+    const idealOffset = this._calculateIdealOffset();
+    const idealLookat = this._calculateIdealLookat();
 
-  private updateCameraPosition() {
-    if (!this._target) {
-      console.warn("Target is null or undefined");
-      return;
-    }
+    // Calculate smoothing factor
+    const t = 1.0 - Math.pow(0.001, timeElapsed);
 
+    // Interpolate positions
+    this._currentPosition.lerp(idealOffset, t);
+    this._currentLookat.lerp(idealLookat, t);
 
-   // const t = 0.05;
-   // const t = 4.0 * timeElapsed;
-   // const t = 1.0 - Math.pow(0.001, timeElapsed);
-
-   // this._currentPosition.lerp(idealOffset, t);
-   // this._currentLookat.lerp(idealLookat, t);
-
-    // Get target position and rotation
-    const targetPosition = this._target.position;
-    const targetRotation = this._target.rotation;
-    
-    // Calculate camera position
-    const cameraPosition = this._offset.clone();
-    cameraPosition.applyQuaternion(targetRotation);
-    cameraPosition.add(targetPosition);
-    
-    // Calculate look at position
-    const lookAtPosition = this._lookAtOffset.clone();
-    lookAtPosition.applyQuaternion(targetRotation);
-    lookAtPosition.add(targetPosition);
-    
-    // Update camera position
-    this._camera.position.copy(cameraPosition);
-    this._camera.lookAt(lookAtPosition);
+    this._camera.position.copy(this._currentPosition);
+    this._camera.lookAt(this._currentLookat);
   }
 }
