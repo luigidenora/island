@@ -23,10 +23,12 @@ progressBar.hideProgressBar();
 
 
 const camera = new PerspectiveCameraAuto(CAMERA_CONFIG.fov, CAMERA_CONFIG.near, CAMERA_CONFIG.far);
+
+const mainScene = new MainScene(camera, renderer, renderTarget);
 const controls = new BasicCharatterController(mainScene.player);
+
 const thirdPersonCamera = new ThirdPersonCamera({camera, target: controls});
 
-const mainScene = new MainScene(camera);
 
 mainScene.on('animate', (event) => {
   if(event){

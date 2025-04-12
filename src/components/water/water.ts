@@ -34,9 +34,10 @@ var waterUniforms = {
 
 export class WaterMaterial extends ShaderMaterial {
 
+  // todo reead this https://stackblitz.com/edit/three-ez-bubble-refraction?file=src%2Fmain.ts,src%2Ftext.ts,src%2Fparticles.ts,src%2Fbubble.ts,src%2FbubbleMaterial.ts,src%2Fscene.ts
   constructor({camera, renderer, renderTarget}:{camera: PerspectiveCamera, renderer:WebGLRenderer, renderTarget:WebGLRenderTarget}) {
     const _supportsDepthTextureExtension = true;//renderer.extensions.get('WEBGL_depth_texture');
-    const _pixelRatio = (window.innerWidth/window.innerHeight); //renderer.extensions.get('WEBGL_depth_texture');
+    const _pixelRatio = window.devicePixelRatio; 
     // TODO: move in loader ? 
     var loader = new TextureLoader();
     const dudvMap = loader.load("https://i.imgur.com/hOIsXiZ.png");
