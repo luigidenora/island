@@ -20,13 +20,13 @@ await Asset.preloadAllPending({
 });
 progressBar.hideProgressBar();
 
-const mainScene = new MainScene();
 
 
 const camera = new PerspectiveCameraAuto(CAMERA_CONFIG.fov, CAMERA_CONFIG.near, CAMERA_CONFIG.far);
 const controls = new BasicCharatterController(mainScene.player);
-
 const thirdPersonCamera = new ThirdPersonCamera({camera, target: controls});
+
+const mainScene = new MainScene(camera);
 
 mainScene.on('animate', (event) => {
   if(event){

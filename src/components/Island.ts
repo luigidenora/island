@@ -1,5 +1,5 @@
 import { Asset } from '@three.ez/main';
-import { Group, Object3D, Vector3 } from 'three';
+import { Group, Mesh, Object3D } from 'three';
 import { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DEBUG } from '../config/debug';
 
@@ -10,6 +10,7 @@ export class Island extends Group {
      * Disable the island from being intercepted by the raycaster (so many objects are children of the island)
      */
     public interceptByRaycaster: boolean = false;
+
 
     constructor() {
         super();
@@ -25,5 +26,15 @@ export class Island extends Group {
         folder.addBinding(this, 'scale');
         folder.addBinding(this, 'rotation');
         folder.addBinding(this, 'position');
+    }
+
+    /** adds an element in place of the identified placeholder */
+      public addToPlaceholder(obj:Object3D, placeholderName:string){
+      const gltfWater = this.querySelector(`[name=${placeholderName}]`);
+      if (gltfWater) {
+        obj.position.copy(gltfWater.position);
+        gltfWater.removeFromParent();
+      }
+      this.add(obj);
     }
 } 
