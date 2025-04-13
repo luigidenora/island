@@ -3,11 +3,9 @@
 varying vec2 vUv;
 
 void main() {
+    vUv = uv;
 
-  vUv = uv;
-
-#include <begin_vertex>
-#include <project_vertex>
-#include <fog_vertex>
-
+    #include <begin_vertex>
+    #include <project_vertex>
+    #include <fog_vertex>
 }

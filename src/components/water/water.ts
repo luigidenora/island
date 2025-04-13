@@ -1,6 +1,7 @@
+import { DEBUG } from "../../config/debug";
 import fragmentShader from "./water.frag?raw";
 import vertexShader from "./water.vert?raw";
-import { Color, PerspectiveCamera, ShaderMaterial, TextureLoader, UniformsLib, UniformsUtils, Vector2, WebGLRenderer, WebGLRenderTarget } from "three";
+import { Color, PerspectiveCamera, RepeatWrapping, ShaderMaterial, TextureLoader, UniformsLib, UniformsUtils, Vector2, WebGLRenderer, WebGLRenderTarget } from "three";
 
 var waterUniforms = {
   time: {
@@ -32,15 +33,18 @@ var waterUniforms = {
   }
 };
 
+
 export class WaterMaterial extends ShaderMaterial {
 
-  // todo reead this https://stackblitz.com/edit/three-ez-bubble-refraction?file=src%2Fmain.ts,src%2Ftext.ts,src%2Fparticles.ts,src%2Fbubble.ts,src%2FbubbleMaterial.ts,src%2Fscene.ts
-  constructor({camera, renderer, renderTarget}:{camera: PerspectiveCamera, renderer:WebGLRenderer, renderTarget:WebGLRenderTarget}) {
-    const _supportsDepthTextureExtension = true;//renderer.extensions.get('WEBGL_depth_texture');
+  constructor({camera, renderTarget}:{camera: PerspectiveCamera, renderTarget:WebGLRenderTarget}) {
+    const _supportsDepthTextureExtension = true;
     const _pixelRatio = window.devicePixelRatio; 
     // TODO: move in loader ? 
-    var loader = new TextureLoader();
-    const dudvMap = loader.load("https://i.imgur.com/hOIsXiZ.png");
+    const dudvMap = new TextureLoader().load(
+      "https://i.imgur.com/hOIsXiZ.png"
+    );
+    dudvMap.wrapS = dudvMap.wrapT = RepeatWrapping;
+
       super({
       defines: {
         DEPTH_PACKING: (_supportsDepthTextureExtension ?? true ) === true ? 0 : 1,
@@ -54,6 +58,9 @@ export class WaterMaterial extends ShaderMaterial {
       fragmentShader,
       fog: true
     });
+
+    this._setupTweakpane();
+
     this.uniforms.cameraNear.value = camera.near;
     this.uniforms.cameraFar.value = camera.far;
     this.uniforms.resolution.value.set(
@@ -67,4 +74,28 @@ export class WaterMaterial extends ShaderMaterial {
         : renderTarget.texture;
   }
 
+  public update(time: number) {
+    this.uniforms.time.value = time * 0.01;
+  }
+
+
+  private _setupTweakpane() {
+    const folder = DEBUG.addFolder({ title: 'Water Material' });
+
+    folder.addBinding(this.uniforms.threshold, 'value', {
+      label: 'Threshold',
+      min: -2,
+      max: 2,
+      step: 0.01
+    });
+
+    // color 
+    folder.addBinding(this.uniforms.waterColor, 'value', {
+      label: 'Water Color',
+    });
+    folder.addBinding(this.uniforms.foamColor, 'value', {
+      label: 'Foam Color',
+    });
+ 
+  }
 }
