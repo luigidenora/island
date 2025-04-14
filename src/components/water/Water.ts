@@ -1,7 +1,7 @@
 import { DEBUG } from "../../config/debug";
 import fragmentShader from "./water.frag?raw";
 import vertexShader from "./water.vert?raw";
-import { Color, PerspectiveCamera, RepeatWrapping, ShaderMaterial, TextureLoader, UniformsLib, UniformsUtils, Vector2, WebGLRenderer, WebGLRenderTarget } from "three";
+import { Color, PerspectiveCamera, RepeatWrapping, ShaderMaterial, TextureLoader, UniformsLib, UniformsUtils, Vector2, WebGLRenderTarget } from "three";
 
 var waterUniforms = {
   time: {

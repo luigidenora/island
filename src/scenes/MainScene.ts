@@ -18,7 +18,7 @@ import {
 } from "three";
 import { Characters } from "../components/Characters";
 import { Island } from "../components/Island";
-import { WaterMaterial } from "../components/water/water";
+import { WaterMaterial } from "../components/water/Water";
 
 export class MainScene extends Scene {
   private island: Island;
