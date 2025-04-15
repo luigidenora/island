@@ -16,7 +16,7 @@ export class ThirdPersonCamera {
     
     this._currentPosition = new Vector3();
     this._currentLookat = new Vector3();
-    this._offset = new Vector3(-1.0, 1.5, -3);
+    this._offset = new Vector3(200, 500, 3);
     this._lookAtOffset = new Vector3(0.0, 1.5, 10.0);
 
     this._currentPosition.copy(this._calculateIdealOffset());
@@ -49,19 +49,19 @@ export class ThirdPersonCamera {
     offsetFolder?.addBinding(this._offset, 'x', { 
       label: 'X Offset', 
       min: -20, 
-      max: 20, 
+      max: 500, 
       step: 0.5 
     });
     offsetFolder?.addBinding(this._offset, 'y', { 
       label: 'Y Offset', 
       min: 0, 
-      max: 10, 
+      max: 500, 
       step: 0.5 
     });
     offsetFolder?.addBinding(this._offset, 'z', { 
       label: 'Z Offset', 
       min: -30, 
-      max: 0, 
+      max: 500, 
       step: 0.5 
     });
     

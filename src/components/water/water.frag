@@ -14,39 +14,39 @@ uniform float threshold;
 uniform vec2 resolution;
 
 float getDepth(const in vec2 screenPosition) {
-    #if DEPTH_PACKING == 1
-    return unpackRGBAToDepth(texture2D(tDepth, screenPosition));
-    #else
-    return texture2D(tDepth, screenPosition).x;
-    #endif
+  #if DEPTH_PACKING == 1
+  return unpackRGBAToDepth(texture2D(tDepth, screenPosition));
+  #else
+  return texture2D(tDepth, screenPosition).x;
+  #endif
 }
 
 float getViewZ(const in float depth) {
-    #if ORTHOGRAPHIC_CAMERA == 1
-    return orthographicDepthToViewZ(depth, cameraNear, cameraFar);
-    #else
-    return perspectiveDepthToViewZ(depth, cameraNear, cameraFar);
-    #endif
+  #if ORTHOGRAPHIC_CAMERA == 1
+  return orthographicDepthToViewZ(depth, cameraNear, cameraFar);
+  #else
+  return perspectiveDepthToViewZ(depth, cameraNear, cameraFar);
+  #endif
 }
-
 const float strength = 1.0;
-
 void main() {
-    vec2 screenUV = gl_FragCoord.xy / resolution;
 
-    float fragmentLinearEyeDepth = getViewZ(gl_FragCoord.z);
-    float linearEyeDepth = getViewZ(getDepth(screenUV));
+  vec2 screenUV = gl_FragCoord.xy / resolution;
 
-    float diff = saturate(fragmentLinearEyeDepth - linearEyeDepth);
+  float fragmentLinearEyeDepth = getViewZ(gl_FragCoord.z);
+  float linearEyeDepth = getViewZ(getDepth(screenUV));
 
-    vec2 displacement = texture2D(tDudv, (vUv * 2.0) - time * 0.05).rg;
-    displacement = ((displacement * 2.0) - 1.0) * strength;
-    diff += displacement.x;
+  float diff = saturate(fragmentLinearEyeDepth - linearEyeDepth);
 
-    gl_FragColor.rgb = mix(foamColor, waterColor, step(threshold, diff));
-    gl_FragColor.a = 1.0;
+  vec2 displacement = texture2D(tDudv, (vUv * 2.0) - time * 0.05).rg;
+  displacement = ((displacement * 2.0) - 1.0) * strength;
+  diff += displacement.x;
 
-    #include <tonemapping_fragment>
-    #include <colorspace_fragment>
-    #include <fog_fragment>
+  gl_FragColor.rgb = mix(foamColor, waterColor, step(threshold, diff));
+  gl_FragColor.a = 1.0;
+
+#include <tonemapping_fragment>
+#include <colorspace_fragment>
+#include <fog_fragment>
+
 }
