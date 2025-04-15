@@ -42,23 +42,23 @@ export class ThirdPersonCamera {
   }
 
   private _setupTweakpane() {
-    const folder = DEBUG.addFolder({ title: 'Camera Controls' });
+    const folder = DEBUG?.addFolder({ title: 'Camera Controls' });
     
     // Camera offset controls
-    const offsetFolder = folder.addFolder({ title: 'Camera Offset' });
-    offsetFolder.addBinding(this._offset, 'x', { 
+    const offsetFolder = folder?.addFolder({ title: 'Camera Offset' });
+    offsetFolder?.addBinding(this._offset, 'x', { 
       label: 'X Offset', 
       min: -20, 
       max: 20, 
       step: 0.5 
     });
-    offsetFolder.addBinding(this._offset, 'y', { 
+    offsetFolder?.addBinding(this._offset, 'y', { 
       label: 'Y Offset', 
       min: 0, 
       max: 10, 
       step: 0.5 
     });
-    offsetFolder.addBinding(this._offset, 'z', { 
+    offsetFolder?.addBinding(this._offset, 'z', { 
       label: 'Z Offset', 
       min: -30, 
       max: 0, 
@@ -66,20 +66,20 @@ export class ThirdPersonCamera {
     });
     
     // Look at offset controls
-    const lookAtFolder = folder.addFolder({ title: 'Look At Offset' });
-    lookAtFolder.addBinding(this._lookAtOffset, 'x', { 
+    const lookAtFolder = folder?.addFolder({ title: 'Look At Offset' });
+    lookAtFolder?.addBinding(this._lookAtOffset, 'x', { 
       label: 'X Look At', 
       min: -10, 
       max: 10, 
       step: 0.5 
     });
-    lookAtFolder.addBinding(this._lookAtOffset, 'y', { 
+    lookAtFolder?.addBinding(this._lookAtOffset, 'y', { 
       label: 'Y Look At', 
       min: 0, 
       max: 5, 
       step: 0.5 
     });
-    lookAtFolder.addBinding(this._lookAtOffset, 'z', { 
+    lookAtFolder?.addBinding(this._lookAtOffset, 'z', { 
       label: 'Z Look At', 
       min: 0, 
       max: 30, 

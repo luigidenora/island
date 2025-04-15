@@ -1,3 +1,10 @@
 import { Pane } from "tweakpane";
 
-export const DEBUG = new Pane(); 
+let DEBUG: Pane | null = null;
+
+if (window.location.hash === "#debug") {
+  DEBUG = new Pane();
+}
+
+export { DEBUG };
+

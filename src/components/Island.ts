@@ -31,10 +31,10 @@ export class Island extends Group {
 
     this.add(...gltf.scene.children);
 
-    const folder = DEBUG.addFolder({ title: "Island" });
-    folder.addBinding(this, "scale");
-    folder.addBinding(this, "rotation");
-    folder.addBinding(this, "position");
+    const folder = DEBUG?.addFolder({ title: "Island" });
+    folder?.addBinding(this, "scale");
+    folder?.addBinding(this, "rotation");
+    folder?.addBinding(this, "position");
 
     const boxGeometry = new BoxGeometry(10, 1, 1);
     const boxMaterial = new MeshLambertMaterial({ color: 0xf69547 });

@@ -80,9 +80,9 @@ export class WaterMaterial extends ShaderMaterial {
 
 
   private _setupTweakpane() {
-    const folder = DEBUG.addFolder({ title: 'Water Material' });
+    const folder = DEBUG?.addFolder({ title: 'Water Material' });
 
-    folder.addBinding(this.uniforms.threshold, 'value', {
+    folder?.addBinding(this.uniforms.threshold, 'value', {
       label: 'Threshold',
       min: -2,
       max: 2,
@@ -90,10 +90,10 @@ export class WaterMaterial extends ShaderMaterial {
     });
 
     // color 
-    folder.addBinding(this.uniforms.waterColor, 'value', {
+    folder?.addBinding(this.uniforms.waterColor, 'value', {
       label: 'Water Color',
     });
-    folder.addBinding(this.uniforms.foamColor, 'value', {
+    folder?.addBinding(this.uniforms.foamColor, 'value', {
       label: 'Foam Color',
     });
  

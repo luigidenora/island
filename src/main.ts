@@ -23,10 +23,11 @@ progressBar.hideProgressBar();
 // levelSelect.mount();
 
 import { Main as MainBase } from "@three.ez/main";
+import { DEBUG } from "./config/debug";
 
 class Main extends MainBase {
   constructor() {
-    super();
+    super({showStats: DEBUG != null});
     const camera = new PerspectiveCameraAuto(
       CAMERA_CONFIG.fov,
       CAMERA_CONFIG.near,
