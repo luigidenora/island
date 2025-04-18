@@ -16,8 +16,12 @@ export class ThirdPersonCamera {
     
     this._currentPosition = new Vector3();
     this._currentLookat = new Vector3();
-    this._offset = new Vector3(200, 500, 3);
+    // Default offset values
+    this._offset = new Vector3(-1.0, 1.5, -3);
     this._lookAtOffset = new Vector3(0.0, 1.5, 10.0);
+    // // debug values
+    // this._offset = new Vector3(200, 500, 3);
+    // this._lookAtOffset = new Vector3(0.0, 10, 50);
 
     this._currentPosition.copy(this._calculateIdealOffset());
     this._currentLookat.copy(this._calculateIdealLookat());

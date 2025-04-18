@@ -3,12 +3,17 @@ import {
   Color,
   DepthTexture,
   DirectionalLight,
+  DoubleSide,
   Fog,
   HemisphereLight,
+  Material,
   Mesh,
+  MeshBasicMaterial,
   MeshDepthMaterial,
+  MeshStandardMaterial,
   NearestFilter,
   NoBlending,
+  Plane,
   PlaneGeometry,
   RGBADepthPacking,
   Scene,
@@ -19,6 +24,7 @@ import {
 import { Characters } from "../components/Characters";
 import { Island } from "../components/Island";
 import { WaterMaterial } from "../components/water/Water";
+import { DEBUG } from "../config/debug";
 
 export class MainScene extends Scene {
   private island: Island;
@@ -100,6 +106,7 @@ export class MainScene extends Scene {
     renderTarget.texture.generateMipmaps = false;
     renderTarget.stencilBuffer = false;
 
+
     if (supportsDepthTextureExtension === true) {
       renderTarget.depthTexture = new DepthTexture(1, 1);
       renderTarget.depthTexture.type = UnsignedShortType;
@@ -107,6 +114,36 @@ export class MainScene extends Scene {
       renderTarget.depthTexture.magFilter = NearestFilter;
     }
 
+    if(DEBUG){
+        const debugdepth = new Mesh(new PlaneGeometry(1,0.5), new MeshStandardMaterial({ map:renderTarget.texture, side:DoubleSide}));
+
+
+        const rendererDebug1 = DEBUG.addFolder({title: "Renderer Debug"});
+
+        rendererDebug1?.addBinding(debugdepth,"position");
+
+        this.on("animate",()=>{
+          debugdepth.position.copy(camera.position);
+          debugdepth.rotation.copy(camera.rotation);
+          debugdepth.translateZ(-1);
+        debugdepth.translateX(1);
+        debugdepth.translateY(-0.5);
+        })
+        this.add(debugdepth)
+
+      const debugRendererTargetPlane = new Mesh(new PlaneGeometry(1,0.5), new MeshStandardMaterial({ map:renderTarget.texture, side:DoubleSide}));
+ const rendererDebug = DEBUG.addFolder({title: "Renderer Debug"});
+
+        rendererDebug?.addBinding(debugRendererTargetPlane,"position");
+      this.on("animate",()=>{
+        debugRendererTargetPlane.position.copy(camera.position);
+        debugRendererTargetPlane.rotation.copy(camera.rotation);
+        debugRendererTargetPlane.translateZ(-1);
+        debugRendererTargetPlane.translateX(-1);
+        debugRendererTargetPlane.translateY(-0.5);
+      })
+      this.add(debugRendererTargetPlane)
+    }
     this.on("viewportresize", (e) => {
       if (e) renderTarget.setSize(e.width, e.height);
     });

@@ -33,6 +33,11 @@ class Main extends MainBase {
       CAMERA_CONFIG.near,
       CAMERA_CONFIG.far
     );
+    
+    const folder = DEBUG?.addFolder({ title: "Island" });
+    folder?.addBinding(camera, "fov");
+    folder?.addBinding(camera, "near");
+    folder?.addBinding(camera, "far");
 
     const scene = new MainScene(camera, this.renderer);
     const controls = new BasicCharatterController(scene.player);
@@ -46,6 +51,8 @@ class Main extends MainBase {
       if (event) {
         controls.update(event.delta);
         thirdPersonCamera.update(event.delta);
+        camera.updateProjectionMatrix();
+
       }
     });
     this.createView({ scene, camera });
