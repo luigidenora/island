@@ -8,7 +8,7 @@ var waterUniforms = {
     value: 0
   },
   threshold: {
-    value: 0.1
+    value: 0.5
   },
   tDudv: {
     value: null
@@ -35,7 +35,9 @@ var waterUniforms = {
 
 
 export class WaterMaterial extends ShaderMaterial {
-
+  
+  private camera: PerspectiveCamera;
+  
   constructor({camera, renderTarget}:{camera: PerspectiveCamera, renderTarget:WebGLRenderTarget}) {
     const _supportsDepthTextureExtension = true;
     const _pixelRatio = window.devicePixelRatio; 
@@ -59,6 +61,7 @@ export class WaterMaterial extends ShaderMaterial {
       fog: true
     });
 
+    this.camera = camera;
     this._setupTweakpane();
 
     this.uniforms.cameraNear.value = camera.near;
@@ -75,7 +78,9 @@ export class WaterMaterial extends ShaderMaterial {
   }
 
   public update(time: number) {
-    this.uniforms.time.value = time * 0.01;
+    this.uniforms.time.value = time / 2;
+    this.uniforms.cameraNear.value = this.camera.near;
+    this.uniforms.cameraFar.value = this.camera.far;
   }
 
 

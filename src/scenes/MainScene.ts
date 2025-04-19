@@ -1,36 +1,15 @@
-import {
-  Camera,
-  Color,
-  DepthTexture,
-  DirectionalLight,
-  DoubleSide,
-  Fog,
-  HemisphereLight,
-  Material,
-  Mesh,
-  MeshBasicMaterial,
-  MeshDepthMaterial,
-  MeshStandardMaterial,
-  NearestFilter,
-  NoBlending,
-  Plane,
-  PlaneGeometry,
-  RGBADepthPacking,
-  Scene,
-  UnsignedShortType,
-  WebGLRenderer,
-  WebGLRenderTarget
-} from "three";
+import { Color, DepthTexture, DirectionalLight, DoubleSide, Fog, HemisphereLight, Mesh, MeshBasicMaterial, MeshDepthMaterial, MeshStandardMaterial, NearestFilter, NoBlending, PlaneGeometry, RGBADepthPacking, Scene, ShaderMaterial, WebGLRenderer, WebGLRenderTarget } from "three";
 import { Characters } from "../components/Characters";
 import { Island } from "../components/Island";
 import { WaterMaterial } from "../components/water/Water";
 import { DEBUG } from "../config/debug";
+import { PerspectiveCameraAuto } from "@three.ez/main";
 
 export class MainScene extends Scene {
   private island: Island;
   public player!: Characters;
 
-  constructor(private camera: Camera, private renderer: WebGLRenderer) {
+  constructor(private camera: PerspectiveCameraAuto, private renderer: WebGLRenderer) {
     super();
 
     this.island = new Island();
@@ -40,13 +19,13 @@ export class MainScene extends Scene {
     this._addLight();
   }
   // TODO: fix type
-  private _addWater(camera: any, renderer: WebGLRenderer) {
+  private _addWater(camera: PerspectiveCameraAuto, renderer: WebGLRenderer) {
     const depthMaterial = new MeshDepthMaterial();
     depthMaterial.depthPacking = RGBADepthPacking;
     depthMaterial.blending = NoBlending;
 
-    const renderTarget = this._initializeRenderTarget(renderer, camera);
-
+    // const renderTarget  = this.setupRenderTarget();
+    const renderTarget = this.setupRenderTarget();
     const waterGeometry = new PlaneGeometry(500, 500);
     const waterMaterial = new WaterMaterial({ camera, renderTarget });
     const water = new Mesh(waterGeometry, waterMaterial);
@@ -55,6 +34,7 @@ export class MainScene extends Scene {
     this.on("animate", (e) => {
       if (e) {
         water.visible = false; // we don't want the depth of the water
+        this.player.visible = false;
         this.overrideMaterial = depthMaterial;
 
         renderer.setRenderTarget(renderTarget);
@@ -63,8 +43,9 @@ export class MainScene extends Scene {
 
         this.overrideMaterial = null;
         water.visible = true;
+        this.player.visible = true;
 
-        water.material.uniforms.time.value = e.total;
+        waterMaterial.update(e.total);
       }
     });
 
@@ -96,62 +77,75 @@ export class MainScene extends Scene {
     this.add(hemiLight, dirLight);
   }
 
-  private _initializeRenderTarget(renderer: WebGLRenderer, camera: any) {
-    const supportsDepthTextureExtension = !!renderer.extensions.get(
-      "WEBGL_depth_texture"
-    );
-    const renderTarget = new WebGLRenderTarget(1, 1, { samples: 4 });
-    renderTarget.texture.minFilter = NearestFilter;
-    renderTarget.texture.magFilter = NearestFilter;
-    renderTarget.texture.generateMipmaps = false;
-    renderTarget.stencilBuffer = false;
+  private setupRenderTarget() {
 
+    const dpr = this.renderer.getPixelRatio();
+    const target = new WebGLRenderTarget(window.innerWidth * dpr, window.innerHeight * dpr);
+    target.texture.minFilter = NearestFilter;
+    target.texture.magFilter = NearestFilter;
+    target.texture.generateMipmaps = false;
+    target.stencilBuffer = false;
+    target.samples = 4
 
-    if (supportsDepthTextureExtension === true) {
-      renderTarget.depthTexture = new DepthTexture(1, 1);
-      renderTarget.depthTexture.type = UnsignedShortType;
-      renderTarget.depthTexture.minFilter = NearestFilter;
-      renderTarget.depthTexture.magFilter = NearestFilter;
+    target.depthTexture = new DepthTexture(window.innerWidth, window.innerHeight);
+
+    if (DEBUG) {
+
+      const depthMaterial = new ShaderMaterial({
+        uniforms: {
+          tDepth: { value: target.depthTexture },
+          cameraNear: { value: this.camera.near },
+          cameraFar: { value: this.camera.far }
+        },
+        vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+        fragmentShader: `
+    uniform sampler2D tDepth;
+    uniform float cameraNear;
+    uniform float cameraFar;
+    varying vec2 vUv;
+
+    float linearizeDepth(float z) {
+      float n = cameraNear;
+      float f = cameraFar;
+      return (2.0 * n) / (f + n - z * (f - n));
     }
 
-    if(DEBUG){
-        const debugdepth = new Mesh(new PlaneGeometry(1,0.5), new MeshStandardMaterial({ map:renderTarget.texture, side:DoubleSide}));
+    void main() {
+      float depth = texture2D(tDepth, vUv).x;
+      float gray = linearizeDepth(depth);
+      gl_FragColor = vec4(vec3(gray), 1.0);
+    }
+  `
+      });
 
 
-        const rendererDebug1 = DEBUG.addFolder({title: "Renderer Debug"});
+      const debugPlane = new Mesh(new PlaneGeometry(0.640, 0.360), depthMaterial);
+      const rendererDebug1 = DEBUG.addFolder({ title: "Renderer Debug" });
+      debugPlane.visible = true;
+      rendererDebug1?.addBinding(debugPlane, "visible");
 
-        rendererDebug1?.addBinding(debugdepth,"position");
-
-        this.on("animate",()=>{
-          debugdepth.position.copy(camera.position);
-          debugdepth.rotation.copy(camera.rotation);
-          debugdepth.translateZ(-1);
-        debugdepth.translateX(1);
-        debugdepth.translateY(-0.5);
-        })
-        this.add(debugdepth)
-
-      const debugRendererTargetPlane = new Mesh(new PlaneGeometry(1,0.5), new MeshStandardMaterial({ map:renderTarget.texture, side:DoubleSide}));
- const rendererDebug = DEBUG.addFolder({title: "Renderer Debug"});
-
-        rendererDebug?.addBinding(debugRendererTargetPlane,"position");
-      this.on("animate",()=>{
-        debugRendererTargetPlane.position.copy(camera.position);
-        debugRendererTargetPlane.rotation.copy(camera.rotation);
-        debugRendererTargetPlane.translateZ(-1);
-        debugRendererTargetPlane.translateX(-1);
-        debugRendererTargetPlane.translateY(-0.5);
+      this.on("animate", () => {
+        debugPlane.position.copy(this.camera.position);
+        debugPlane.rotation.copy(this.camera.rotation);
+        debugPlane.translateZ(-1);
+        debugPlane.translateX(-1);
+        debugPlane.translateY(-0.5);
       })
-      this.add(debugRendererTargetPlane)
+      this.add(debugPlane)
+
     }
     this.on("viewportresize", (e) => {
-      if (e) renderTarget.setSize(e.width, e.height);
+      if (e) target.setSize(e.width, e.height);
     });
-    this.on("animate", (e) => {
-      this.renderer.setRenderTarget(renderTarget);
-      this.renderer.render(this.island, camera);
-      this.renderer.setRenderTarget(null);
-    });
-    return renderTarget;
+
+    return target
+
   }
+
 }
