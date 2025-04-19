@@ -29,7 +29,10 @@ var waterUniforms = {
     value: new Color(0xffffff)
   },
   waterColor: {
-    value: new Color(0x14c6a5)
+    value: new Color(0x14aec6)
+  },
+ waterDepthColor: {
+    value: new Color(0x0373a3)
   }
 };
 
@@ -58,7 +61,8 @@ export class WaterMaterial extends ShaderMaterial {
       ]),
       vertexShader,
       fragmentShader,
-      fog: true
+      fog: true,
+      transparent: true
     });
 
     this.camera = camera;

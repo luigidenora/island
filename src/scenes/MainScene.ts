@@ -29,7 +29,9 @@ export class MainScene extends Scene {
     const waterGeometry = new PlaneGeometry(500, 500);
     const waterMaterial = new WaterMaterial({ camera, renderTarget });
     const water = new Mesh(waterGeometry, waterMaterial);
-    water.rotation.x = -Math.PI * 0.5;
+
+    water.rotation.x = -Math.PI / 2;
+    // water.applyMatrix4(water.matrix);
 
     this.on("animate", (e) => {
       if (e) {
