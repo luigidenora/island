@@ -10,10 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dimforge/rapier3d": "^0.15.1",
     "@three.ez/instanced-mesh": "^0.1.0",
     "@three.ez/main": "^0.5.1",
     "three": "^0.170.0",
-    "tweakpane": "^4.0.5"
+    "tweakpane": "^4.0.5",
+    "vite-plugin-wasm": "^3.4.1"
   },
   "devDependencies": {
     "@tweakpane/core": "^2.0.5",
