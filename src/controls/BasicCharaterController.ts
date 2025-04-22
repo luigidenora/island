@@ -213,7 +213,7 @@ export class BasicCharatterControllerInput {
     document.addEventListener("mouseup", (e) => this._onMouseUp(e), false);
     
     // Initialize joystick
-    this.joystick = new TouchJoystick();
+    // this.joystick = new TouchJoystick();
     
     // Add touch event listeners for non-joystick areas
     document.addEventListener("touchstart", (e) => this._onTouchStart(e), false);
@@ -253,10 +253,6 @@ export class BasicCharatterControllerInput {
       if (joystickValues.x < -0.3) this.keys.left = true;
       if (joystickValues.x > 0.3) this.keys.right = true;
 
-      // Handle tap for jump
-      if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) {
-        this.keys.space = true;
-      }
     }
   }
 

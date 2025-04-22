@@ -5,11 +5,13 @@ import { WaterMaterial } from "../components/water/Water";
 import { DEBUG } from "../config/debug";
 import { PerspectiveCameraAuto } from "@three.ez/main";
 import RAPIER, { Collider, RigidBody } from "@dimforge/rapier3d";
+import { BasicCharacterController } from "../controllers/BasicCharacterController";
 
 export class MainScene extends Scene {
   private island!: Island;
   public player!: Characters;
   public world: any;
+  private characterController!: BasicCharacterController;
 
   /** Internal storage for objects with physics bodies to sync them with the scene. */
   // TODO: Use a new Object3D subclass to store physics objects
@@ -156,26 +158,13 @@ export class MainScene extends Scene {
     console.assert(!!spawnPoint, "Player spawn point not found");
 
     this.island.remove(spawnPoint);
-    const spawnPosition = spawnPoint.position
-    const playerBodyDesc = RAPIER.RigidBodyDesc.dynamic()
-      .setTranslation(spawnPosition.x, spawnPosition.y, spawnPosition.z)
-      .setLinearDamping(4.0) // più alto = più freno al movimento automatico
-      .setAngularDamping(1.0).lockRotations();
 
-    const playerBody = this.world.createRigidBody(playerBodyDesc);
-    const height = 1.0;
-    const radius = 0.5;
-
-    const playerColliderDesc = RAPIER.ColliderDesc.capsule(height / 2, radius)
-      .setFriction(1.5)
-      .setRestitution(0.0); // no bounce
-
-    this.world.createCollider(playerColliderDesc, playerBody);
-
+    // Create the player character
     this.player = new Characters("Captain_Barbarossa", spawnPoint);
-
     this.add(this.player);
-
+    
+    // Create the character controller with the player and physics world
+    this.characterController = new BasicCharacterController(this.player, this.world);
   }
 
   private _setupLighting() {
@@ -275,7 +264,16 @@ export class MainScene extends Scene {
       this.debugGeometry.geometry.setAttribute("color", new BufferAttribute(colors, 4));
     }
 
+    // Update the character controller
+    if (this.characterController) {
+      this.characterController.update(1/60); // Assuming 60 FPS, adjust as needed
+    }
+
+    // Sync other physics objects
     for (const { object3D, body } of this._physicsObjects) {
+      // Skip the player as it's handled by the character controller
+      if (object3D === this.player) continue;
+      
       const pos = body.translation();
       object3D.position.set(pos.x, pos.y, pos.z);
 
