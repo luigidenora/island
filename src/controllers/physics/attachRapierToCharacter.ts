@@ -43,8 +43,8 @@ export function attachRapierToCharacter(
   // Store the physics objects in the character's userData for later access
   character.userData.rapier = { body, collider };
   
-  // // Store the offset for later use in syncing
-  // character.userData.rapier.offset = new Vector3(0, -height / 2, 0);
+  // Store the offset for later use in syncing
+  character.userData.rapier.offset = new Vector3(0, -height / 2, 0);
   
   return { body, collider };
 } 
