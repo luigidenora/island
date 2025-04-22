@@ -42,7 +42,6 @@ export class Island extends Group {
     if (gltfObj) {
       obj.position.copy(gltfObj.position);
       obj.quaternion.copy(gltfObj.quaternion);
-      // obj.quaternion.copy(gltfObj.quaternion);
       gltfObj.removeFromParent();
     }
     this.add(obj);

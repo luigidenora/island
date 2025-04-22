@@ -70,28 +70,28 @@ export class MainScene extends Scene {
     this.add(this.island);
 
     const terrain = this.island.querySelector("[name=terrain]") as Mesh;
-    //@ts-ignore
-    console.assert(terrain, "[MainScene] 'terrain' not found in the island.");
-    // Compute world transform
-    const worldPos = new Vector3();
-    const worldQuat = new Quaternion();
+    console.assert(terrain as any, "[MainScene] Whoops! 'terrain' not found in the island.");
 
-    terrain.getWorldPosition(worldPos);
+    const worldPos = terrain.localToWorld(new Vector3());
+    const worldQuat = new Quaternion();
     terrain.getWorldQuaternion(worldQuat);
-    // Fisica
-    const terrainBodyDesc = RAPIER.RigidBodyDesc.fixed()
+
+    const bodyDesc = RAPIER.RigidBodyDesc.fixed()
       .setTranslation(worldPos.x, worldPos.y, worldPos.z)
       .setRotation(worldQuat);
+    const body = this.world.createRigidBody(bodyDesc);
 
-    const terrainBody = this.world.createRigidBody(terrainBodyDesc);
+    const geometry = terrain.geometry;
+    geometry.computeBoundingBox(); 
 
-    const vertices = terrain.geometry.attributes.position.array as Float32Array;
+    const scaledVerts = applyScaleToVertices(
+      geometry.attributes.position.array as Float32Array,
+      terrain.scale
+    );
+    const indices = geometry.index?.array as Uint32Array;
 
-    // collider da convex hull (se è chiuso) o trimesh (più preciso ma meno performante)
-    const terrainColliderDesc = RAPIER.ColliderDesc.trimesh(vertices, new Uint32Array(terrain.geometry.index?.array || []));
-    this.world.createCollider(terrainColliderDesc, terrainBody);
-
-
+    const colliderDesc = RAPIER.ColliderDesc.trimesh(scaledVerts,indices); // o trimesh se serve
+    this.world.createCollider(colliderDesc, body);
 
   }
 
@@ -269,4 +269,15 @@ export class MainScene extends Scene {
   }
 }
 
-
+function applyScaleToVertices(
+  vertices: Float32Array,
+  scale: Vector3
+): Float32Array {
+  const scaled = new Float32Array(vertices.length);
+  for (let i = 0; i < vertices.length; i += 3) {
+    scaled[i] = vertices[i] * scale.x;
+    scaled[i + 1] = vertices[i + 1] * scale.y;
+    scaled[i + 2] = vertices[i + 2] * scale.z;
+  }
+  return scaled;
+}
