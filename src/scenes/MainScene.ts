@@ -20,15 +20,13 @@ export class MainScene extends Scene {
   private debugGeometry = new LineSegments(
     new BufferGeometry(),
     new LineBasicMaterial({ vertexColors: true }),
-  );  
+  );
 
 
 
   constructor(private camera: PerspectiveCameraAuto, private renderer: WebGLRenderer) {
     super();
-    this.debugGeometry.frustumCulled = false;
-    this.debugGeometry.interceptByRaycaster = false;
-    this.add(this.debugGeometry);
+
     this.island = new Island();
     this.add(this.island);
     this._addPlayers();
@@ -37,15 +35,23 @@ export class MainScene extends Scene {
     this.initWord();
   }
 
-  async initWord() {
-    this.world = new window.RAPIER.World();
+  initWord() {
+    if (DEBUG) {
+      const debugGeomery = DEBUG.addFolder({ title: "RAPIER debug" });
+      this.debugGeometry.frustumCulled = false;
+      this.debugGeometry.interceptByRaycaster = false;
+      this.add(this.debugGeometry);
+      this.debugGeometry.visible = true;
+      debugGeomery?.addBinding(this.debugGeometry, "visible");
+    }
+    const gravity = new RAPIER.Vector3(0.0, -9.81, 0.0);
+    this.world = new RAPIER.World(gravity);
     this.on("animate", (event) => {
       this.updatePhysics();
     });
   }
 
 
-  // TODO: fix type
   private _addWater(camera: PerspectiveCameraAuto, renderer: WebGLRenderer) {
     const depthMaterial = new MeshDepthMaterial();
     depthMaterial.depthPacking = RGBADepthPacking;
@@ -179,52 +185,52 @@ export class MainScene extends Scene {
 
 
   override add(...objects: any[]): this {
-    
+
     return super.add(...objects);
   }
 
 
 
-    /**
-   * Adds a Three.js object with a physics body to the scene.
-   * Automatically detects collider size based on object scale and geometry.
-   * @param object3D - The Three.js Object3D to be added with physics.
-   * @returns The added object along with its physics body and collider.
-   */
-    addWithPhysics(object3D: Object3D) {
-      const fixedRegexp = /detail|tile|wood|spawn/;
-      const type = fixedRegexp.test(object3D.name) ? "fixed" : "dynamic";
-      this.add(object3D);
-  
-      if (this.world) {
-        const position = object3D.position.toArray();
-  
-        const body = this.world.createRigidBody(
-          (type === "dynamic"
-            ? window.RAPIER.RigidBodyDesc.dynamic()
-            : window.RAPIER.RigidBodyDesc.fixed()
-          )
-            .setTranslation(...position)
-            .setRotation(object3D.quaternion),
-        );
-        const vertices = new Float32Array(
-          (object3D as Mesh).geometry.attributes.position.array,
-        );
-        // let indices = new Uint32Array(
-        //   ((object3D as Mesh).geometry.index?.array) || []
-        // );
-        //const shape = window.RAPIER.ColliderDesc.trimesh(vertices, indices);
-        const shape = window.RAPIER.ColliderDesc.convexHull(vertices);
-        // examples : https://sbedit.net/3262ca5784e913958397e67827c5d76b6d35b1bf
-        if (shape) {
-          const collider = this.world.createCollider(shape, body);
-          this._physicsObjects.push({ object3D, body, collider });
-          return { mesh: object3D, body, collider };
-        } else {
-          throw new Error("Failed to create collider, shape is null");
-        }
+  /**
+ * Adds a Three.js object with a physics body to the scene.
+ * Automatically detects collider size based on object scale and geometry.
+ * @param object3D - The Three.js Object3D to be added with physics.
+ * @returns The added object along with its physics body and collider.
+ */
+  addWithPhysics(object3D: Object3D) {
+    const fixedRegexp = /detail|tile|wood|spawn/;
+    const type = fixedRegexp.test(object3D.name) ? "fixed" : "dynamic";
+    this.add(object3D);
+
+    if (this.world) {
+      const position = object3D.position.toArray();
+
+      const body = this.world.createRigidBody(
+        (type === "dynamic"
+          ? window.RAPIER.RigidBodyDesc.dynamic()
+          : window.RAPIER.RigidBodyDesc.fixed()
+        )
+          .setTranslation(...position)
+          .setRotation(object3D.quaternion),
+      );
+      const vertices = new Float32Array(
+        (object3D as Mesh).geometry.attributes.position.array,
+      );
+      // let indices = new Uint32Array(
+      //   ((object3D as Mesh).geometry.index?.array) || []
+      // );
+      //const shape = window.RAPIER.ColliderDesc.trimesh(vertices, indices);
+      const shape = window.RAPIER.ColliderDesc.convexHull(vertices);
+      // examples : https://sbedit.net/3262ca5784e913958397e67827c5d76b6d35b1bf
+      if (shape) {
+        const collider = this.world.createCollider(shape, body);
+        this._physicsObjects.push({ object3D, body, collider });
+        return { mesh: object3D, body, collider };
+      } else {
+        throw new Error("Failed to create collider, shape is null");
       }
     }
+  }
 
 
   /**
