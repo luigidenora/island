@@ -176,9 +176,8 @@ export class MainScene extends Scene {
   }
 
   private createRenderTarget(): WebGLRenderTarget {
-    const dpr = this.renderer.getPixelRatio();
-    const width = window.innerWidth * dpr;
-    const height = window.innerHeight * dpr;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
     const target = new WebGLRenderTarget(width, height);
     target.texture.minFilter = NearestFilter;
