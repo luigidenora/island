@@ -4,7 +4,7 @@ import { Island } from "../components/Island";
 import { WaterMaterial } from "../components/water/Water";
 import { DEBUG } from "../config/debug";
 import { PerspectiveCameraAuto } from "@three.ez/main";
-import { Collider, RigidBody } from "@dimforge/rapier3d";
+import RAPIER, { Collider, RigidBody } from "@dimforge/rapier3d";
 
 export class MainScene extends Scene {
   private island!: Island;
@@ -82,7 +82,7 @@ export class MainScene extends Scene {
     const body = this.world.createRigidBody(bodyDesc);
 
     const geometry = terrain.geometry;
-    geometry.computeBoundingBox(); 
+    geometry.computeBoundingBox();
 
     const scaledVerts = applyScaleToVertices(
       geometry.attributes.position.array as Float32Array,
@@ -90,7 +90,7 @@ export class MainScene extends Scene {
     );
     const indices = geometry.index?.array as Uint32Array;
 
-    const colliderDesc = RAPIER.ColliderDesc.trimesh(scaledVerts,indices); // o trimesh se serve
+    const colliderDesc = RAPIER.ColliderDesc.trimesh(scaledVerts, indices); // o trimesh se serve
     this.world.createCollider(colliderDesc, body);
 
   }
@@ -156,9 +156,26 @@ export class MainScene extends Scene {
     console.assert(!!spawnPoint, "Player spawn point not found");
 
     this.island.remove(spawnPoint);
+    const spawnPosition = spawnPoint.position
+    const playerBodyDesc = RAPIER.RigidBodyDesc.dynamic()
+      .setTranslation(spawnPosition.x, spawnPosition.y, spawnPosition.z)
+      .setLinearDamping(4.0) // più alto = più freno al movimento automatico
+      .setAngularDamping(1.0).lockRotations();
+
+    const playerBody = this.world.createRigidBody(playerBodyDesc);
+    const height = 1.0;
+    const radius = 0.5;
+
+    const playerColliderDesc = RAPIER.ColliderDesc.capsule(height / 2, radius)
+      .setFriction(1.5)
+      .setRestitution(0.0); // no bounce
+
+    this.world.createCollider(playerColliderDesc, playerBody);
 
     this.player = new Characters("Captain_Barbarossa", spawnPoint);
+
     this.add(this.player);
+
   }
 
   private _setupLighting() {
