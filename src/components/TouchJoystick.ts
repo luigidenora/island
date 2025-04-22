@@ -111,6 +111,11 @@ export class TouchJoystick {
       // Calculate the current position relative to the center
       this.currentX = touch.clientX - centerX;
       this.currentY = touch.clientY - centerY;
+
+      // If vertical movement is more significant, reduce horizontal movement
+      if (Math.abs(this.currentY) > Math.abs(this.currentX)) {
+        this.currentX *= 0.3; // Reduce horizontal influence when moving vertically
+      }
       
       // Update joystick position
       this._updateJoystickPosition(this.currentX, this.currentY);
