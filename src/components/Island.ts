@@ -21,14 +21,6 @@ export class Island extends Group {
       "Island model has no children"
     );
 
-    // gltf.scene.traverse((child) => {
-    //   if (child instanceof Mesh) {
-    //     child.material = new MeshLambertMaterial({
-    //       color: child.material.color,
-    //     });
-    //   }
-    // });
-
     this.add(...gltf.scene.children);
 
     const folder = DEBUG?.addFolder({ title: "Island" });
@@ -46,11 +38,14 @@ export class Island extends Group {
 
   /** adds an element in place of the identified placeholder */
   public addToPlaceholder(obj: Object3D, placeholderName: string) {
-    const gltfWater = this.querySelector(`[name=${placeholderName}]`);
-    if (gltfWater) {
-      obj.position.copy(gltfWater.position);
-      gltfWater.removeFromParent();
+    const gltfObj = this.querySelector(`[name=${placeholderName}]`);
+    if (gltfObj) {
+      obj.position.copy(gltfObj.position);
+      obj.quaternion.copy(gltfObj.quaternion);
+      // obj.quaternion.copy(gltfObj.quaternion);
+      gltfObj.removeFromParent();
     }
     this.add(obj);
   }
+
 }

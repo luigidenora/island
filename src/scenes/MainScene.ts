@@ -1,4 +1,4 @@
-import { BufferAttribute, BufferGeometry, Color, DepthTexture, DirectionalLight, Fog, HemisphereLight, LineBasicMaterial, LineSegments, Mesh, MeshDepthMaterial, NearestFilter, NoBlending, Object3D, PlaneGeometry, RGBADepthPacking, Scene, ShaderMaterial, WebGLRenderer, WebGLRenderTarget } from "three";
+import { BufferAttribute, BufferGeometry, Color, DepthTexture, DirectionalLight, Fog, HemisphereLight, LineBasicMaterial, LineSegments, Mesh, MeshDepthMaterial, NearestFilter, NoBlending, Object3D, PlaneGeometry, Quaternion, RGBADepthPacking, Scene, ShaderMaterial, Vector3, WebGLRenderer, WebGLRenderTarget } from "three";
 import { Characters } from "../components/Characters";
 import { Island } from "../components/Island";
 import { WaterMaterial } from "../components/water/Water";
@@ -7,7 +7,7 @@ import { PerspectiveCameraAuto } from "@three.ez/main";
 import { Collider, RigidBody } from "@dimforge/rapier3d";
 
 export class MainScene extends Scene {
-  private island: Island;
+  private island!: Island;
   public player!: Characters;
   public world: any;
 
@@ -29,15 +29,13 @@ export class MainScene extends Scene {
     private renderer: WebGLRenderer
   ) {
     super();
-
-    this.island = new Island();
-    this.add(this.island);
-
-    this._createPlayer();
-    this._addWaterSurface();
-    this._setupLighting();
     this._initializePhysicsWorld();
+    this._setupLighting();
+    this._islandSurface();
+    this._addWaterSurface();
+    this._createPlayer();
   }
+
 
   public addObjectWithPhysics(object3D: Object3D) {
 
@@ -65,6 +63,36 @@ export class MainScene extends Scene {
     this._physicsObjects.push({ object3D, body, collider });
 
     return { mesh: object3D, body, collider };
+  }
+
+  private _islandSurface() {
+    this.island = new Island();
+    this.add(this.island);
+
+    const terrain = this.island.querySelector("[name=terrain]") as Mesh;
+    //@ts-ignore
+    console.assert(terrain, "[MainScene] 'terrain' not found in the island.");
+    // Compute world transform
+    const worldPos = new Vector3();
+    const worldQuat = new Quaternion();
+
+    terrain.getWorldPosition(worldPos);
+    terrain.getWorldQuaternion(worldQuat);
+    // Fisica
+    const terrainBodyDesc = RAPIER.RigidBodyDesc.fixed()
+      .setTranslation(worldPos.x, worldPos.y, worldPos.z)
+      .setRotation(worldQuat);
+
+    const terrainBody = this.world.createRigidBody(terrainBodyDesc);
+
+    const vertices = terrain.geometry.attributes.position.array as Float32Array;
+
+    // collider da convex hull (se è chiuso) o trimesh (più preciso ma meno performante)
+    const terrainColliderDesc = RAPIER.ColliderDesc.trimesh(vertices, new Uint32Array(terrain.geometry.index?.array || []));
+    this.world.createCollider(terrainColliderDesc, terrainBody);
+
+
+
   }
 
   private _initializePhysicsWorld() {
@@ -98,7 +126,6 @@ export class MainScene extends Scene {
     });
 
     const water = new Mesh(waterGeometry, waterMaterial);
-    water.rotation.x = -Math.PI / 2;
 
     this.on("animate", (e) => {
       if (!e) return;
@@ -118,6 +145,8 @@ export class MainScene extends Scene {
 
       waterMaterial.update(e.total);
     });
+    //@ts-ignore
+    console.assert(this.island, "[MainScene] Whoops! Tried to position water before island was ready.");
 
     this.island.addToPlaceholder(water, "water");
   }
