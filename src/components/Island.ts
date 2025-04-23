@@ -16,12 +16,7 @@ export class Island extends Group {
     super();
     const gltf = Asset.get<GLTF>("assets/models/island.glb");
 
-    for (const instancedMesh of gltf.scene.querySelectorAll("[isInstancedMesh=true]")) {
-      const parent = instancedMesh.parent;
-      const instancedMesh2 = parseToInstancedMesh2(instancedMesh as InstancedMesh);
-      instancedMesh.removeFromParent();
-       parent?.add(instancedMesh2);
-    }
+    this.convertInstancedMeshes2(gltf);
 
     console.assert(!!gltf, "Island model not found in assets");
     console.assert(
@@ -36,6 +31,16 @@ export class Island extends Group {
     folder?.addBinding(this, "rotation");
     folder?.addBinding(this, "position");
 
+  }
+
+  /** convert all instanced meshes to instancedMesh2 */
+  private convertInstancedMeshes2(gltf: GLTF) {
+    for (const instancedMesh of gltf.scene.querySelectorAll("[isInstancedMesh=true]")) {
+      const parent = instancedMesh.parent;
+      const instancedMesh2 = parseToInstancedMesh2(instancedMesh as InstancedMesh);
+      instancedMesh.removeFromParent();
+      parent?.add(instancedMesh2);
+    }
   }
 
   /** adds an element in place of the identified placeholder */
