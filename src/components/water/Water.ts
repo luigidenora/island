@@ -1,7 +1,7 @@
 import { DEBUG } from "../../config/debug";
 import fragmentShader from "./water.frag?raw";
 import vertexShader from "./water.vert?raw";
-import { Color, PerspectiveCamera, RepeatWrapping, ShaderMaterial, TextureLoader, UniformsLib, UniformsUtils, Vector2, WebGLRenderTarget } from "three";
+import { Color, PerspectiveCamera, RepeatWrapping, ShaderMaterial, TextureLoader, UniformsLib, UniformsUtils, Vector2, Vector4, WebGLRenderTarget } from "three";
 
 var waterUniforms = {
   time: {
@@ -9,6 +9,9 @@ var waterUniforms = {
   },
   threshold: {
     value: 0.5
+  },
+  cutoff: {
+    value: 0.3
   },
   tDudv: {
     value: null
@@ -31,28 +34,28 @@ var waterUniforms = {
   waterColor: {
     value: new Color(0x14aec6)
   },
- waterDepthColor: {
+  waterDepthColor: {
     value: new Color(0x0373a3)
   }
 };
 
 
 export class WaterMaterial extends ShaderMaterial {
-  
+
   private camera: PerspectiveCamera;
-  
-  constructor({camera, renderTarget}:{camera: PerspectiveCamera, renderTarget:WebGLRenderTarget}) {
+
+  constructor({ camera, renderTarget }: { camera: PerspectiveCamera, renderTarget: WebGLRenderTarget }) {
     const _supportsDepthTextureExtension = true;
-    const _pixelRatio = window.devicePixelRatio; 
+    const _pixelRatio = window.devicePixelRatio;
     // TODO: move in loader ? 
     const dudvMap = new TextureLoader().load(
       "https://i.imgur.com/hOIsXiZ.png"
     );
     dudvMap.wrapS = dudvMap.wrapT = RepeatWrapping;
 
-      super({
+    super({
       defines: {
-        DEPTH_PACKING: (_supportsDepthTextureExtension ?? true ) === true ? 0 : 1,
+        DEPTH_PACKING: (_supportsDepthTextureExtension ?? true) === true ? 0 : 1,
         ORTHOGRAPHIC_CAMERA: 0
       },
       uniforms: UniformsUtils.merge([
@@ -98,13 +101,27 @@ export class WaterMaterial extends ShaderMaterial {
       step: 0.01
     });
 
+    folder?.addBinding(this.uniforms.cutoff, 'value', {
+      label: 'Depth Cutoff',
+      min: -2,
+      max: 2,
+      step: 0.01
+    });
     // color 
     folder?.addBinding(this.uniforms.waterColor, 'value', {
       label: 'Water Color',
+      color: { alpha: true, type: 'float' },
+    });
+
+    folder?.addBinding(this.uniforms.waterDepthColor, 'value', {
+      label: 'Water Depth Color', view: 'color',
+      color: { alpha: true, type: 'float' },
     });
     folder?.addBinding(this.uniforms.foamColor, 'value', {
       label: 'Foam Color',
+      view: 'color',
+      color: { alpha: true, type: 'float' },
     });
- 
+
   }
 }
