@@ -1,16 +1,38 @@
-import { BufferAttribute, BufferGeometry, Color, DepthTexture, DirectionalLight, Fog, HemisphereLight, LineBasicMaterial, LineSegments, Mesh, MeshDepthMaterial, NearestFilter, NoBlending, Object3D, PlaneGeometry, Quaternion, RGBADepthPacking, Scene, ShaderMaterial, Vector3, WebGLRenderer, WebGLRenderTarget } from "three";
+import {
+  BufferAttribute,
+  BufferGeometry,
+  Color,
+  DepthTexture,
+  DirectionalLight,
+  Fog,
+  HemisphereLight,
+  LineBasicMaterial,
+  LineSegments,
+  Mesh,
+  MeshDepthMaterial,
+  NearestFilter,
+  NoBlending,
+  Object3D,
+  PlaneGeometry,
+  Quaternion,
+  RGBADepthPacking,
+  Scene,
+  ShaderMaterial,
+  Vector3,
+  WebGLRenderer,
+  WebGLRenderTarget,
+} from "three";
 import { Characters } from "../components/Characters";
 import { Island } from "../components/Island";
 import { WaterMaterial } from "../components/water/Water";
 import { DEBUG } from "../config/debug";
-import { PerspectiveCameraAuto } from "@three.ez/main";
-import RAPIER, { Collider, RigidBody } from "@dimforge/rapier3d";
+import { AnimateEvent, PerspectiveCameraAuto } from "@three.ez/main";
+import type { Collider, RigidBody, World } from "@dimforge/rapier3d";
 import { BasicCharacterController } from "../controllers/BasicCharacterController";
-
 export class MainScene extends Scene {
   private island!: Island;
   public player!: Characters;
-  public world: any;
+  public world!: World;
   public characterController!: BasicCharacterController;
 
   /** Internal storage for objects with physics bodies to sync them with the scene. */
@@ -38,41 +60,17 @@ export class MainScene extends Scene {
     this._createPlayer();
   }
 
-
-  public addObjectWithPhysics(object3D: Object3D) {
-
-    this.add(object3D);
-
-    if (!this.world) return;
-
-    const position = object3D.position.toArray();
-    const rotation = object3D.quaternion;
-
-    const bodyDesc = object3D.userData.isRigidBodyFixed ? window.RAPIER.RigidBodyDesc.fixed() : window.RAPIER.RigidBodyDesc.dynamic();
-
-    const body = this.world.createRigidBody(
-      bodyDesc.setTranslation(...position).setRotation(rotation)
-    );
-
-    const vertices = new Float32Array(
-      (object3D as Mesh).geometry.attributes.position.array
-    );
-
-    const shape = window.RAPIER.ColliderDesc.convexHull(vertices);
-    if (!shape) throw new Error("Failed to create collider, shape is null");
-
-    const collider = this.world.createCollider(shape, body);
-    this._physicsObjects.push({ object3D, body, collider });
-
-    return { mesh: object3D, body, collider };
-  }
-
   private _islandSurface() {
     this.island = new Island();
     this.add(this.island);
 
     const terrain = this.island.querySelector("[name=terrain]") as Mesh;
-    console.assert(terrain as any, "[MainScene] Whoops! 'terrain' not found in the island.");
+    console.assert(
+      terrain as any,
+      "[MainScene] Whoops! 'terrain' not found in the island."
+    );
+
+    this._addCaveRockColliders();
 
     const worldPos = terrain.localToWorld(new Vector3());
     const worldQuat = new Quaternion();
@@ -94,7 +92,6 @@ export class MainScene extends Scene {
 
     const colliderDesc = RAPIER.ColliderDesc.trimesh(scaledVerts, indices); // o trimesh se serve
     this.world.createCollider(colliderDesc, body);
-
   }
 
   private _initializePhysicsWorld() {
@@ -111,7 +108,7 @@ export class MainScene extends Scene {
     const gravity = new RAPIER.Vector3(0, -9.81, 0);
     this.world = new RAPIER.World(gravity);
 
-    this.on("animate", () => this._syncPhysicsObjects());
+    this.on("animate", (e) => this._syncPhysicsObjects(e));
   }
 
   private _addWaterSurface() {
@@ -148,7 +145,10 @@ export class MainScene extends Scene {
       waterMaterial.update(e.total);
     });
     //@ts-ignore
-    console.assert(this.island, "[MainScene] Whoops! Tried to position water before island was ready.");
+    console.assert(
+      this.island,
+      "[MainScene] Whoops! Tried to position water before island was ready."
+    );
 
     this.island.addToPlaceholder(water, "water");
   }
@@ -162,9 +162,12 @@ export class MainScene extends Scene {
     // Create the player character
     this.player = new Characters("Captain_Barbarossa", spawnPoint);
     this.add(this.player);
-    
+
     // Create the character controller with the player and physics world
-    this.characterController = new BasicCharacterController(this.player, this.world);
+    this.characterController = new BasicCharacterController(
+      this.player,
+      this.world
+    );
   }
 
   private _setupLighting() {
@@ -252,34 +255,73 @@ export class MainScene extends Scene {
     return target;
   }
 
-
-  private _syncPhysicsObjects() {
+  private _syncPhysicsObjects(e: AnimateEvent) {
     if (!this.world) return;
 
     this.world.step();
 
     if (DEBUG) {
       const { vertices, colors } = this.world.debugRender();
-      this.debugGeometry.geometry.setAttribute("position", new BufferAttribute(vertices, 3));
-      this.debugGeometry.geometry.setAttribute("color", new BufferAttribute(colors, 4));
+      this.debugGeometry.geometry.setAttribute(
+        "position",
+        new BufferAttribute(vertices, 3)
+      );
+      this.debugGeometry.geometry.setAttribute(
+        "color",
+        new BufferAttribute(colors, 4)
+      );
     }
 
     // Update the character controller
     if (this.characterController) {
-      this.characterController.update(1/60); // Assuming 60 FPS, adjust as needed
+      this.characterController.update(e.delta);
     }
 
     // Sync other physics objects
     for (const { object3D, body } of this._physicsObjects) {
       // Skip the player as it's handled by the character controller
       if (object3D === this.player) continue;
-      
+
       const pos = body.translation();
       object3D.position.set(pos.x, pos.y, pos.z);
 
       const rot = body.rotation();
       object3D.quaternion.set(rot.x, rot.y, rot.z, rot.w);
     }
+  }
+
+  private _addCaveRockColliders() {
+    const caveRocks = this.island.querySelectorAll(
+      "[name^=Environment_Cliff]"
+    ) as Mesh[];
+
+    if (!caveRocks.length) {
+      console.warn("No cave rocks found to add colliders.");
+      return;
+    }
+
+    caveRocks.forEach((rock) => {
+      const worldPos = rock.localToWorld(new Vector3());
+      const worldQuat = new Quaternion();
+      rock.getWorldQuaternion(worldQuat);
+
+      const bodyDesc = RAPIER.RigidBodyDesc.fixed()
+        .setTranslation(worldPos.x, worldPos.y, worldPos.z)
+        .setRotation(worldQuat);
+      const body = this.world.createRigidBody(bodyDesc);
+
+      const geometry = rock.geometry;
+      geometry.computeBoundingBox();
+
+      const scaledVerts = applyScaleToVertices(
+        geometry.attributes.position.array as Float32Array,
+        rock.scale
+      );
+      const indices = geometry.index?.array as Uint32Array;
+
+      const colliderDesc = RAPIER.ColliderDesc.convexMesh(scaledVerts);
+      this.world.createCollider(colliderDesc, body);
+    });
   }
 }
 

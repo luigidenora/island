@@ -24,7 +24,7 @@ float getViewZ(const in float depth) {
 
 float readDepth(sampler2D depthSampler, vec2 coord) {
     float fragCoordZ = texture2D(depthSampler, coord).x;
-    float viewZ = perspectiveDepthToViewZ(fragCoordZ, cameraNear, cameraFar);
+    float viewZ = getViewZ(fragCoordZ);
     return viewZToOrthographicDepth(viewZ, cameraNear, cameraFar);
 }
 
@@ -33,7 +33,7 @@ void main() {
 
     float linearEyeDepth = readDepth(tDepth, screenUV);
 
-    gl_FragColor.rgb = mix(waterColor, waterDepthColor, linearEyeDepth);
+    gl_FragColor.rgb = vec3(linearEyeDepth);
     gl_FragColor.a = 1.0;
 
     #include <tonemapping_fragment>
