@@ -1,10 +1,13 @@
 import { Characters } from "../components/Characters";
 import { CharacterAnimator } from "./CharacterAnimator";
-import { CharacterInputHandler } from "./CharacterInputHandler";
+import { CharacterKeybordInputHandler } from "./CharacterInputKeybordHandler";
 import { CharacterPhysicsController } from "./CharacterPhysicsController";
 import { CharacterStateMachine } from "./CharacterStateMachine";
 import RAPIER from "@dimforge/rapier3d";
 import { attachRapierToCharacter } from "./physics/attachRapierToCharacter";
+import { BasicCharacterInputHandler } from "./CharacterInput";
+import { CharacterInputTouchHandler } from "./CharacterInputTouchHandler";
+import { VirtualJoystick } from "../components/virtual-joystick/VirtualJoystick";
 
 /**
  * Main character controller that orchestrates all components.
@@ -14,7 +17,7 @@ import { attachRapierToCharacter } from "./physics/attachRapierToCharacter";
  * 3. Providing a clean interface for the rest of the application
  */
 export class BasicCharacterController {
-  private input: CharacterInputHandler;
+  private input: BasicCharacterInputHandler;
   private animator: CharacterAnimator;
   private physics: CharacterPhysicsController;
   private stateMachine: CharacterStateMachine;
@@ -29,7 +32,15 @@ export class BasicCharacterController {
     attachRapierToCharacter(character, world);
     
     // Initialize all components
-    this.input = new CharacterInputHandler();
+    
+    const touchJoystick = new VirtualJoystick();
+
+    if(touchJoystick.isVisible)  {
+      this.input = new CharacterInputTouchHandler(touchJoystick);
+    }
+    else {
+      this.input = new CharacterKeybordInputHandler();
+    }
     this.animator = new CharacterAnimator(character);
     this.physics = new CharacterPhysicsController(character);
     this.stateMachine = new CharacterStateMachine(this.animator);
@@ -53,9 +64,6 @@ export class BasicCharacterController {
     if (!this.character) {
       return;
     }
-    
-    // Update input
-    this.input.update();
     
     // Update state machine (handles animations)
     this.stateMachine.update(delta, this.input);

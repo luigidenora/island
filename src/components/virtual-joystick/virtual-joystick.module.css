@@ -1,0 +1,101 @@
+/* === Joystick Container (Glass Circle) === */
+.joystickContainer {
+  position: fixed;
+  bottom: 5dvw;
+  left: 5dvw;
+  width: 10em;
+  height: 10em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  background-image: url("assets/joystick/transparent-dark/joystick-container.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* === Joystick Knob === */
+.joystick {
+  width: 6em;
+  height: 6em;
+  background-image: url("assets/joystick/transparent-dark/joystick.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 2px solid red;
+  transition: transform 0.15s ease;
+}
+
+.joystick:active {
+  transform: scale(1.1);
+}
+
+/* === Buttons Container (right corner, Game Boy style) === */
+.buttonsContainer {
+  position: fixed;
+  bottom: 5dvw;
+  right: 5dvw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0; /* No vertical gap */
+  user-select: none;
+  width: 10em; /* Adjusted width */
+}
+
+/* === Game Buttons (modern + retro fusion, Game Boy style) === */
+.gameboyButton {
+  width: 6em;
+  height: 6em;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  user-select: none;
+}
+
+.gameboyButton:active {
+  transform: scale(0.9);
+}
+
+/* === Sword Button (higher and slightly to the left) === */
+.swordButton {
+  place-self: end;
+  background-image: url("assets/joystick/transparent-dark/sword.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* === Jump Button (lower and slightly to the right) === */
+.jumpButton {
+  place-self: start;
+  background-image: url("assets/joystick/transparent-dark/jump.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* === Responsive for Mobile (Game Boy style) === */
+@media (max-width: 768px) {
+  .joystickContainer {
+    width: 6em;
+    height: 6em;
+  }
+
+  .joystick {
+    width: 3.5em;
+    height: 3.5em;
+  }
+  .buttonsContainer{
+    width: 6em; 
+  }
+
+ .gameboyButton{
+  width: 3.5em;
+  height: 3.5em;
+ }
+}

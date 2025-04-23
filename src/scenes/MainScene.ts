@@ -11,7 +11,7 @@ export class MainScene extends Scene {
   private island!: Island;
   public player!: Characters;
   public world: any;
-  private characterController!: BasicCharacterController;
+  public characterController!: BasicCharacterController;
 
   /** Internal storage for objects with physics bodies to sync them with the scene. */
   // TODO: Use a new Object3D subclass to store physics objects

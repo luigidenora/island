@@ -1,14 +1,13 @@
 import { PerspectiveCameraAuto } from '@three.ez/main';
 import { CAMERA_CONFIG } from './config/constants';
-import { BasicCharatterController } from './controls/BasicCharaterController';
-import { ThirdPersonCamera } from './controls/ThirdPersonCamera';
+import { ThirdPersonCamera } from './controllers/ThirdPersonCamera';
 import { MainScene } from './scenes/MainScene';
 import './style';
 import './ui/styles/progress-bar.css';
 import './ui/styles/ui.css';
 import { Main as MainBase } from '@three.ez/main';
 import { DEBUG } from './config/debug';
-
+import { BasicCharacterController } from './controllers/BasicCharacterController';
 export class Main extends MainBase {
   constructor() {
     super({ showStats: DEBUG != null });
@@ -20,16 +19,14 @@ export class Main extends MainBase {
     folder?.addBinding(camera, 'far');
 
     const scene = new MainScene(camera, this.renderer);
-    const controls = new BasicCharatterController(scene.player);
 
     const thirdPersonCamera = new ThirdPersonCamera({
       camera,
-      target: controls,
+      target: scene.characterController,
     });
 
     scene.on('animate', (event) => {
       if (event) {
-        controls.update(event.delta);
         thirdPersonCamera.update(event.delta);
         camera.updateProjectionMatrix();
       }

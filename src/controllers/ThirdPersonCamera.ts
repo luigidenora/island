@@ -1,16 +1,16 @@
 import { Camera, Vector3 } from "three";
-import { BasicCharatterController } from "./BasicCharaterController";
 import { DEBUG } from "../config/debug";
+import { BasicCharacterController } from "./BasicCharacterController";
 
 export class ThirdPersonCamera { 
-  private _params: {camera: Camera, target: BasicCharatterController};
+  private _params: {camera: Camera, target: BasicCharacterController};
   private _camera: Camera;
   private _currentPosition: Vector3;
   private _currentLookat: Vector3;
   private _offset: Vector3;
   private _lookAtOffset: Vector3;
 
-  constructor(params: {camera: Camera, target: BasicCharatterController}) {
+  constructor(params: {camera: Camera, target: BasicCharacterController}) {
     this._params = params;
     this._camera = params.camera;
     

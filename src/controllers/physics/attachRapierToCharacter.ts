@@ -16,7 +16,6 @@ export function attachRapierToCharacter(
 ): { body: RAPIER.RigidBody; collider: RAPIER.Collider } {
   // Ensure the character's matrix is up to date
   character.updateMatrixWorld(true);
-  
   // Create a dynamic rigid body for the character
   const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
     .setTranslation(character.position.x, character.position.y, character.position.z)

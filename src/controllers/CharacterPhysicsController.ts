@@ -1,8 +1,8 @@
 import { Quaternion, Vector3, Matrix4 } from "three";
 import { Characters } from "../components/Characters";
-import { CharacterInputHandler } from "./CharacterInputHandler";
 import RAPIER from "@dimforge/rapier3d";
 import { DEBUG } from "../config/debug";
+import { BasicCharacterInputHandler } from "./CharacterInput";
 
 /**
  * Handles physics-based movement for the character using Rapier.
@@ -103,12 +103,12 @@ export class CharacterPhysicsController {
    * @param delta - The time elapsed since the last update in seconds
    * @param input - The input handler
    */
-  update(delta: number, input: CharacterInputHandler): void {
+  update(delta: number, input: BasicCharacterInputHandler): void {
     // Check if the character is grounded
     this._checkGrounded();
     
     // Handle jumping
-    if (input.keys.space && this.isGrounded) {
+    if (input.keys.jump && this.isGrounded) {
       this._jump();
     }
     
@@ -129,7 +129,7 @@ export class CharacterPhysicsController {
     }
     
     // Apply movement force
-    const speed = input.keys.shift ? this.runSpeed : this.moveSpeed;
+    const speed = input.keys.run ? this.runSpeed : this.moveSpeed;
     moveDir.multiplyScalar(speed);
     
     // Get current velocity

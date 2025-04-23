@@ -1,5 +1,4 @@
 import { CharacterAnimator, BasicCharacterControllerProxy } from "./CharacterAnimator";
-import { CharacterInputHandler } from "./CharacterInputHandler";
 import { CharacterAnimationName } from "../config/types";
 
 /**
@@ -68,7 +67,7 @@ export abstract class CharacterState {
    * @param timeElapsed - The time elapsed since the last update in seconds
    * @param input - The input handler
    */
-  update(timeElapsed: number, input: CharacterInputHandler): void {}
+  update(timeElapsed: number, input: BasicCharacterInputHandler): void {}
 }
 
 /**
@@ -129,7 +128,7 @@ export class FiniteStateMachine {
    * @param timeElapsed - The time elapsed since the last update in seconds
    * @param input - The input handler
    */
-  update(timeElapsed: number, input: CharacterInputHandler) {
+  update(timeElapsed: number, input: BasicCharacterInputHandler) {
     if (this.currentState) {
       this.currentState.update(timeElapsed, input);
     }
@@ -169,6 +168,7 @@ export class CharacterStateMachine extends FiniteStateMachine {
 
 // Import LoopOnce for the CharacterState class
 import { LoopOnce } from "three";
+import { BasicCharacterInputHandler } from "./CharacterInput";
 
 // State implementations
 export class IdleState extends CharacterState {
@@ -193,12 +193,12 @@ export class IdleState extends CharacterState {
 
   exit(): void {}
 
-  update(timeElapsed: number, input: CharacterInputHandler): void {
+  update(timeElapsed: number, input: BasicCharacterInputHandler): void {
     if (input.keys.forward || input.keys.backward) {
       this._parent.setState("Walk");
-    } else if (input.keys.space) {
+    } else if (input.keys.jump) {
       this._parent.setState("Jump");
-    } else if (input.keys.mousePressed) {
+    } else if (input.keys.sword) {
       this._parent.setState("Sword");
     }
   }
@@ -232,10 +232,12 @@ export class WalkState extends CharacterState {
     }
   }
 
-  update(timeElapsed: number, input: CharacterInputHandler) {
+  update(timeElapsed: number, input: BasicCharacterInputHandler) {
     if (input.keys.forward || input.keys.backward) {
-      if (input.keys.shift) {
+      if (input.keys.run) {
         this._parent.setState("Run");
+      } else if (input.keys.sword) {
+        this._parent.setState("Sword");
       }
       return;
     }
@@ -275,10 +277,16 @@ export class RunState extends CharacterState {
 
   exit(): void {}
 
-  update(timeElapsed: number, input: CharacterInputHandler) {
+  update(timeElapsed: number, input: BasicCharacterInputHandler) {
     if (input.keys.forward || input.keys.backward) {
-      if (!input.keys.shift) {
+      if (!input.keys.run) {
         this._parent.setState("Walk");
+      }
+      else if (input.keys.sword) {
+        this._parent.setState("Sword");
+      }
+      else if (input.keys.sword) {
+        this._parent.setState("Sword");
       }
       return;
     }
@@ -310,7 +318,7 @@ export class JumpState extends CharacterState {
     }
   }
 
-  update(timeElapsed: number, input: CharacterInputHandler): void {
+  update(timeElapsed: number, input: BasicCharacterInputHandler): void {
     // Jump state doesn't need to check for input as it's a one-time animation
   }
 
@@ -439,4 +447,4 @@ export class YesState extends CharacterState {
   get name(): CharacterAnimationName {
     return "Yes";
   }
-} 
+}
