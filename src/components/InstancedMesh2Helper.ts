@@ -1,5 +1,5 @@
 import { InstancedMesh2, InstancedMesh2Params } from '@three.ez/instanced-mesh';
-import { InstancedMesh, Matrix4 } from 'three';
+import { InstancedMesh, Material, Matrix4 } from 'three';
 
 const _tempMat4 = new Matrix4();
 
@@ -7,7 +7,16 @@ export function parseToInstancedMesh2(mesh: InstancedMesh, params: InstancedMesh
   params.capacity ??= mesh.count;
 
   const instancedMesh = new InstancedMesh2(mesh.geometry, mesh.material, params);
-  instancedMesh.addInstances(mesh.count, () => {});
+
+  instancedMesh.name = (mesh.material as Material).name;
+  
+  if (instancedMesh.name.includes('Palm')){
+    instancedMesh.setManualDetectionMode();
+    instancedMesh.bindProperty('visible', () => instancedMesh.scene?.userData.isRenderTargetRendering);
+    
+}
+
+  instancedMesh.addInstances(mesh.count, () => { });
 
   instancedMesh.position.copy(mesh.position);
   instancedMesh.quaternion.copy(mesh.quaternion);

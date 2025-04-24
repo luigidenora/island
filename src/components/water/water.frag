@@ -34,13 +34,13 @@ float readDepth(sampler2D depthSampler, vec2 coord) {
 const float strength = 0.5;
 
 void main() {
-    vec2 screenUV = gl_FragCoord.xy / resolution;
-    float depthFromBuffer = texture2D(tDepth, screenUV).r;
-
-    gl_FragColor = vec4(vec3(depthFromBuffer), 1.0);
-    return;
-
     // vec2 screenUV = gl_FragCoord.xy / resolution;
+    // float depthFromBuffer = texture2D(tDepth, screenUV).r;
+    //
+    // gl_FragColor = vec4(vec3(depthFromBuffer), 1.0);
+    // return;
+
+    vec2 screenUV = gl_FragCoord.xy / resolution;
 
     float fragmentLinearEyeDepth = gl_FragCoord.z;
 
@@ -56,9 +56,9 @@ void main() {
     displacement = ((displacement * 1.0) - 1.0) * strength;
     t += displacement.x;
 
-    gl_FragColor.rgb = mix(foamColor, gradient, diff);
+    gl_FragColor.rgb = mix(foamColor, gradient, t);
     // gl_FragColor.rgb =vec3(t,0.0,0.0);
-    gl_FragColor.a = 1.0;
+    gl_FragColor.a = t + 0.7;
 
     // vec2 screenUV = gl_FragCoord.xy / resolution;
     //

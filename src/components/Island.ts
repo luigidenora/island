@@ -37,7 +37,7 @@ export class Island extends Group {
   private convertInstancedMeshes2(gltf: GLTF) {
     for (const instancedMesh of gltf.scene.querySelectorAll("[isInstancedMesh=true]")) {
       const parent = instancedMesh.parent;
-      const instancedMesh2 = parseToInstancedMesh2(instancedMesh as InstancedMesh);
+      const instancedMesh2 = parseToInstancedMesh2(instancedMesh as InstancedMesh, { createEntities:true});
       instancedMesh.removeFromParent();
       parent?.add(instancedMesh2);
     }

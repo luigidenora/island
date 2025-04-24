@@ -8,6 +8,7 @@ import {
   HemisphereLight,
   LineBasicMaterial,
   LineSegments,
+  Material,
   Mesh,
   MeshDepthMaterial,
   NearestFilter,
@@ -27,8 +28,9 @@ import { Island } from "../components/Island";
 import { WaterMaterial } from "../components/water/Water";
 import { DEBUG } from "../config/debug";
 import { AnimateEvent, PerspectiveCameraAuto } from "@three.ez/main";
-import type { Collider, RigidBody, World } from "@dimforge/rapier3d";
+import { type Collider, type RigidBody, type World } from "@dimforge/rapier3d";
 import { BasicCharacterController } from "../controllers/BasicCharacterController";
+import { InstancedMesh2 } from "@three.ez/instanced-mesh";
 export class MainScene extends Scene {
   private island!: Island;
   public player!: Characters;
@@ -71,6 +73,7 @@ export class MainScene extends Scene {
     );
 
     this._addCaveRockColliders();
+    this._addTreeColliders();
 
     const worldPos = terrain.localToWorld(new Vector3());
     const worldQuat = new Quaternion();
@@ -108,7 +111,9 @@ export class MainScene extends Scene {
     const gravity = new RAPIER.Vector3(0, -9.81, 0);
     this.world = new RAPIER.World(gravity);
 
-    this.on("animate", (e) => this._syncPhysicsObjects(e));
+    this.on("animate", (e) => {
+        this._syncPhysicsObjects(e)
+    })
   }
 
   private _addWaterSurface() {
@@ -126,13 +131,16 @@ export class MainScene extends Scene {
 
     const water = new Mesh(waterGeometry, waterMaterial);
 
-    this.on("animate", (e) => {
+    this.on("afteranimate", (e) => {
       if (!e) return;
 
       // Render depth pass
       water.visible = false;
       this.player.visible = false;
+      this.userData.isRenderTargetRendering = false;
       this.overrideMaterial = depthMaterial;
+     this.detectChanges(true);
+
 
       this.renderer.setRenderTarget(renderTarget);
       this.renderer.render(this, this.camera);
@@ -140,8 +148,10 @@ export class MainScene extends Scene {
 
       this.overrideMaterial = null;
       water.visible = true;
+      this.userData.isRenderTargetRendering = true;
       this.player.visible = true;
 
+     this.detectChanges(true);
       waterMaterial.update(e.total);
     });
     //@ts-ignore
@@ -292,13 +302,47 @@ export class MainScene extends Scene {
       object3D.quaternion.set(rot.x, rot.y, rot.z, rot.w);
     }
   }
+  private _addTreeColliders() {
+    const instanced = (this.island.querySelectorAll("[name^=Palm]") as InstancedMesh2[]);
+    if (!instanced.length) {
+      console.warn("No tree found to add colliders.");
+      return;
+    }
+
+    instanced.forEach((treeIstance) => {
+
+      treeIstance.instances.forEach((tree) => {
+        const treePos = tree.position;
+
+
+        const worldPos = treeIstance.localToWorld(treePos.clone());
+        const worldQuat = new Quaternion();
+        treeIstance.getWorldQuaternion(worldQuat);
+
+
+        const bodyDesc = RAPIER.RigidBodyDesc.fixed()
+          .setTranslation(worldPos.x, worldPos.y, worldPos.z)
+          .setRotation(worldQuat);
+        const body = this.world.createRigidBody(bodyDesc);
+
+        const geometry = treeIstance.geometry;
+        geometry.computeBoundingBox();
+
+        const colliderDesc = RAPIER.ColliderDesc.cuboid(0.5,4, 0.5);
+
+        this.world.createCollider(colliderDesc, body);
+
+      })
+    });
+
+  }
 
   private _addCaveRockColliders() {
     const caveRocks = this.island.querySelectorAll(
       "[name^=Environment_Cliff]"
     ) as Mesh[];
 
-    if (!caveRocks.length) {
+    if (caveRocks.length) {
       console.warn("No cave rocks found to add colliders.");
       return;
     }

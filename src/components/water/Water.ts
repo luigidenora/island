@@ -8,16 +8,16 @@ var waterUniforms = {
     value: 0
   },
   threshold: {
-    value: 0.5
+    value: 0.35
   },
   smoothstepStart: {
-    value: 0.0
+    value: 1
   },
   smoothstepEnd: {
-    value: 0.15
+    value: 0.7
   },
   textureFoamSize: {
-    value: 20.0
+    value: 1.0
   },
   tDudv: {
     value: null
