@@ -9,6 +9,7 @@ uniform sampler2D tDudv;
 uniform vec3 waterColor;
 uniform vec3 waterDepthColor;
 uniform vec3 foamColor;
+uniform float textureFoamSize;
 uniform float cameraNear;
 uniform float cameraFar;
 uniform float time;
@@ -19,37 +20,44 @@ uniform vec2 resolution;
 
 float getViewZ(const in float depth) {
     #if ORTHOGRAPHIC_CAMERA == 1
-    return orthographicDepthToViewZ(depth, cameraNear, cameraFar);
+    return orthographicDepthToViewZ(depth, cameraNear+ threshold, cameraFar);
     #else
-    return perspectiveDepthToViewZ(depth, cameraNear, cameraFar);
+    return perspectiveDepthToViewZ(depth, cameraNear+ threshold, cameraFar);
     #endif
 }
 
 float readDepth(sampler2D depthSampler, vec2 coord) {
     float fragCoordZ = texture2D(depthSampler, coord).x;
     float viewZ = getViewZ(fragCoordZ);
-    return viewZToOrthographicDepth(viewZ, cameraNear, cameraFar);
+    return viewZToOrthographicDepth(viewZ, cameraNear + threshold, cameraFar);
 }
-const float strength = 1.0;
+const float strength = 0.5;
 
 void main() {
     vec2 screenUV = gl_FragCoord.xy / resolution;
+    float depthFromBuffer = texture2D(tDepth, screenUV).r;
+
+    gl_FragColor = vec4(vec3(depthFromBuffer), 1.0);
+    return;
+
+    // vec2 screenUV = gl_FragCoord.xy / resolution;
 
     float fragmentLinearEyeDepth = gl_FragCoord.z;
-    float linearEyeDepth = texture2D(tDepth, screenUV).r;
- // float linearEyeDepth = readDepth(tDepth, screenUV);
-    float diff = abs(fragmentLinearEyeDepth - linearEyeDepth);
 
-     float t = smoothstep(smoothstepStart, smoothstepEnd, diff * 100.0);
-     // float t = smoothstep(0.1, 0.26, linearEyeDepth);
+    float linearEyeDepth = texture2D(tDepth, screenUV).x;
+    float linearEyeDepth2 = readDepth(tDepth, screenUV);
+    float diff = saturate(linearEyeDepth - linearEyeDepth2);
+
+    float t = smoothstep(smoothstepStart, smoothstepEnd, diff);
+    // float t = smoothstep(0.1, 0.26, linearEyeDepth);
     vec3 gradient = mix(waterColor, waterDepthColor, t);
 
-    vec2 displacement = texture2D(tDudv, (vUv * 20.0) - time * 0.05).rg;
-    displacement = ((displacement * 4.0) - 1.0) * strength;
+    vec2 displacement = texture2D(tDudv, (vUv * textureFoamSize) - time * 0.05).rg;
+    displacement = ((displacement * 1.0) - 1.0) * strength;
     t += displacement.x;
 
-    gl_FragColor.rgb = mix(foamColor, gradient, step(threshold,t));
-    // gl_FragColor.rgb = gradient;
+    gl_FragColor.rgb = mix(foamColor, gradient, diff);
+    // gl_FragColor.rgb =vec3(t,0.0,0.0);
     gl_FragColor.a = 1.0;
 
     // vec2 screenUV = gl_FragCoord.xy / resolution;

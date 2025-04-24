@@ -242,9 +242,10 @@ export class MainScene extends Scene {
       this.on("animate", () => {
         debugPlane.position.copy(this.camera.position);
         debugPlane.rotation.copy(this.camera.rotation);
-        debugPlane.translateZ(-1);
-        debugPlane.translateX(-1);
-        debugPlane.translateY(-0.5);
+        debugPlane.translateZ(this.camera.near * -2);
+        debugPlane.translateX(this.camera.near * -2);
+        debugPlane.translateY(this.camera.near * -0.5);
+        debugPlane.scale.setScalar(this.camera.near * 2);
       });
 
       this.add(debugPlane);

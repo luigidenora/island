@@ -5,7 +5,7 @@ export const ISLAND_CONFIG = {
 };
 
 export const CAMERA_CONFIG = {
-  near: 0.1, 
+  near: 3.3, 
   far: 250.0,
   fov: 70,
   translateX: 20,

@@ -1,4 +1,3 @@
-import { texture } from "three/webgpu";
 import { DEBUG } from "../../config/debug";
 import fragmentShader from "./water.frag?raw";
 import vertexShader from "./water.vert?raw";
@@ -12,9 +11,13 @@ var waterUniforms = {
     value: 0.5
   },
   smoothstepStart: {
-    value: 0.02
-  }, smoothstepEnd: {
-    value: 0.45
+    value: 0.0
+  },
+  smoothstepEnd: {
+    value: 0.15
+  },
+  textureFoamSize: {
+    value: 20.0
   },
   tDudv: {
     value: null
@@ -55,7 +58,7 @@ export class WaterMaterial extends ShaderMaterial {
       "https://i.imgur.com/hOIsXiZ.png"
     );
     dudvMap.wrapS = dudvMap.wrapT = RepeatWrapping;
-    dudvMap.repeat.set(10,10);
+    dudvMap.repeat.set(10, 10);
 
     super({
       defines: {
@@ -103,6 +106,13 @@ export class WaterMaterial extends ShaderMaterial {
       min: -2,
       max: 2,
       step: 0.01
+    });
+
+    folder?.addBinding(this.uniforms.textureFoamSize, 'value', {
+      label: 'textureFoamSize',
+      min: 1.0,
+      max: 5000.0,
+      step: 1
     });
 
     folder?.addBinding(this.uniforms.smoothstepStart, 'value', {
