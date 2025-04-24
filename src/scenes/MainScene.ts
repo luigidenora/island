@@ -163,6 +163,8 @@ export class MainScene extends Scene {
     this.player = new Characters("Captain_Barbarossa", spawnPoint);
     this.add(this.player);
 
+    this.player.rotateY(Math.PI); // todo remove this rotation
+
     // Create the character controller with the player and physics world
     this.characterController = new BasicCharacterController(
       this.player,

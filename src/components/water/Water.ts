@@ -1,7 +1,8 @@
+import { texture } from "three/webgpu";
 import { DEBUG } from "../../config/debug";
 import fragmentShader from "./water.frag?raw";
 import vertexShader from "./water.vert?raw";
-import { Color, PerspectiveCamera, RepeatWrapping, ShaderMaterial, TextureLoader, UniformsLib, UniformsUtils, Vector2, Vector4, WebGLRenderTarget } from "three";
+import { Color, PerspectiveCamera, RepeatWrapping, ShaderMaterial, TextureLoader, UniformsLib, UniformsUtils, Vector2, WebGLRenderTarget } from "three";
 
 var waterUniforms = {
   time: {
@@ -10,8 +11,10 @@ var waterUniforms = {
   threshold: {
     value: 0.5
   },
-  cutoff: {
-    value: 0.3
+  smoothstepStart: {
+    value: 0.02
+  }, smoothstepEnd: {
+    value: 0.45
   },
   tDudv: {
     value: null
@@ -52,6 +55,7 @@ export class WaterMaterial extends ShaderMaterial {
       "https://i.imgur.com/hOIsXiZ.png"
     );
     dudvMap.wrapS = dudvMap.wrapT = RepeatWrapping;
+    dudvMap.repeat.set(10,10);
 
     super({
       defines: {
@@ -101,10 +105,16 @@ export class WaterMaterial extends ShaderMaterial {
       step: 0.01
     });
 
-    folder?.addBinding(this.uniforms.cutoff, 'value', {
+    folder?.addBinding(this.uniforms.smoothstepStart, 'value', {
       label: 'Depth Cutoff',
-      min: -2,
-      max: 2,
+      min: 0,
+      max: 1,
+      step: 0.01
+    });
+    folder?.addBinding(this.uniforms.smoothstepEnd, 'value', {
+      label: 'Depth Cutoff',
+      min: 0,
+      max: 1,
       step: 0.01
     });
     // color 

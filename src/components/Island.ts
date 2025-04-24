@@ -17,7 +17,7 @@ export class Island extends Group {
     const gltf = Asset.get<GLTF>("assets/models/island.glb");
 
     this.convertInstancedMeshes2(gltf);
- debugger;
+
     console.assert(!!gltf, "Island model not found in assets");
     console.assert(
       gltf.scene.children[0] instanceof Object3D,
