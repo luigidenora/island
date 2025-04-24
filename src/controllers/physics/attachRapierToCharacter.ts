@@ -20,8 +20,6 @@ export function attachRapierToCharacter(
   const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
     .setTranslation(character.position.x, character.position.y, character.position.z)
     .setRotation(character.quaternion)
-    .setLinearDamping(4.0)
-    .setAngularDamping(1.0)
     .lockRotations(); // Lock rotations to prevent the character from falling over
   
   const body = world.createRigidBody(bodyDesc);
