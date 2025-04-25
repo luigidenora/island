@@ -342,7 +342,7 @@ export class MainScene extends Scene {
       "[name^=Environment_Cliff]"
     ) as Mesh[];
 
-    if (!caveRocks.length) {
+    if (caveRocks.length) {
       console.warn("No cave rocks found to add colliders.");
       return;
     }
