@@ -1,6 +1,7 @@
 import { Asset } from "@three.ez/main";
 import { ProgressManager } from "./ui/ProgressManager";
 import { Main } from "./main";
+import { LevelSelect } from "./ui/overlays/LevelSelect";
 
 // Init progress bar UI
 const progressBar = new ProgressManager();
@@ -23,7 +24,7 @@ import("@dimforge/rapier3d").then((rapier3d) => {
   progressBar.hideProgressBar();
 
   // Mount level selector UI
-  // const levelSelect = new LevelSelect();
-  // levelSelect.mount();
+  const levelSelect = new LevelSelect();
+  levelSelect.mount();
 });
 
