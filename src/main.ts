@@ -3,10 +3,14 @@ import { CAMERA_CONFIG } from './config/constants';
 import { DEBUG } from './config/debug';
 import { ThirdPersonCamera } from './controllers/ThirdPersonCamera';
 import { MainScene } from './scenes/MainScene';
+import { LevelSelect } from './ui/overlays/LevelSelect';
 import './style';
 import './ui/styles/progress-bar.css';
 import './ui/styles/ui.css';
+
 export class Main extends MainBase {
+  private thirdPersonCamera: ThirdPersonCamera;
+
   constructor() {
     super({ showStats: DEBUG != null });
     const camera = new PerspectiveCameraAuto(CAMERA_CONFIG.fov, CAMERA_CONFIG.near, CAMERA_CONFIG.far);
@@ -18,17 +22,22 @@ export class Main extends MainBase {
 
     const scene = new MainScene(camera, this.renderer);
 
-    const thirdPersonCamera = new ThirdPersonCamera({
+    this.thirdPersonCamera = new ThirdPersonCamera({
       camera,
       target: scene.characterController,
     });
 
     scene.on('animate', (event) => {
       if (event) {
-        thirdPersonCamera.update(event.delta);
+        this.thirdPersonCamera.update(event.delta);
         camera.updateProjectionMatrix();
       }
     });
+
     this.createView({ scene, camera });
+  }
+
+  getThirdPersonCamera(): ThirdPersonCamera {
+    return this.thirdPersonCamera;
   }
 }

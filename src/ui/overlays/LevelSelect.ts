@@ -1,14 +1,17 @@
 import { LevelButton } from '../components/LevelButton';
 import { GameHUD } from './GameHUD';
+import { ThirdPersonCamera } from '../../controllers/ThirdPersonCamera';
 
 export class LevelSelect {
     private container: HTMLDivElement;
     private gameHUD: GameHUD;
+    private camera: ThirdPersonCamera;
 
-    constructor() {
+    constructor(camera: ThirdPersonCamera) {
         this.container = document.createElement('div');
         this.container.className = 'level-select-overlay';
         this.gameHUD = new GameHUD();
+        this.camera = camera;
         this.init();
     }
 
@@ -41,6 +44,13 @@ export class LevelSelect {
         this.hide();
         // Show GameHUD
         this.gameHUD.mount();
+        
+        // Update camera position based on level
+        if (this.camera) {
+            // Set camera offset based on level number
+            this.camera.setOffset(-1.0, 5.0, -5.5);
+        }
+        
         // Here you can add logic to load the specific level
         console.log(`Starting level ${levelNumber}`);
     }

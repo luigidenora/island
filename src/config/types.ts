@@ -16,7 +16,7 @@ export type ControllerParams = {
  * Contains all possible character animations like idle, walk, run, jump etc.
  * Used by the character controller to manage and play animations.
  */
-export type CharacterAnimationName = 'Death' | 'Duck' | 'HitReact' | 'Idle' | 'Jump' | 'Jump_Idle' | 'Jump_Land' | 'No' | 'Punch' | 'Run' | 'Sword' | 'Walk' | 'Wave' | 'Yes';
+export type CharacterAnimationName = 'Death' | 'Duck' | 'HitReact' | 'Idle' | 'Jump' | 'Jump_Idle' | 'Jump_Land' | 'No' | 'Punch' | 'Run' | 'Sword' | 'Walk' | 'Wave' | 'Yes' | 'Swim' | 'Swim_Bite' | 'Swim_Fast';
 /**
  * Checks if a string is a valid CharacterAnimationName
  * @param name - The string to check
@@ -26,7 +26,7 @@ export function isValidAnimationName(name: string): name is CharacterAnimationNa
     const validNames: CharacterAnimationName[] = [
       'Death', 'Duck', 'HitReact', 'Idle', 'Jump', 'Jump_Idle', 
       'Jump_Land', 'No', 'Punch', 'Run', 'Sword', 'Walk', 
-      'Wave', 'Yes'
+      'Wave', 'Yes', 'Swim', 'Swim_Bite', 'Swim_Fast',
     ];
     return validNames.includes(name as CharacterAnimationName);
   }

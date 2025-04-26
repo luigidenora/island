@@ -16,32 +16,29 @@ export function attachRapierToCharacter(
 ): { body: RAPIER.RigidBody; collider: RAPIER.Collider } {
   // Ensure the character's matrix is up to date
   character.updateMatrixWorld(true);
-  // Create a dynamic rigid body for the character
-  const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
-    .setTranslation(character.position.x, character.position.y, character.position.z)
+
+  const bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
+  .setTranslation(character.position.x, character.position.y, character.position.z)
     .setRotation(character.quaternion)
-    .lockRotations(); // Lock rotations to prevent the character from falling over
-  
+    .lockRotations();
+
   const body = world.createRigidBody(bodyDesc);
-  
-  // Create a capsule collider for the character
-  // Adjust these values to match the character's dimensions
-  const height = 1.0; // Increased height to better match character
-  const radius = 0.4; // Slightly reduced radius
-  
-  // Create the capsule collider
-  const colliderDesc = RAPIER.ColliderDesc.capsule(height / 2, radius)
-    .setFriction(1.5)
-    .setRestitution(0.0) // No bounce
-    .setTranslation(0, height / 2, 0); // Offset the collider to align with character's center
-  
+
+  const height = character.height || 1; // Default height if not set
+  const radius =character.radius || 0.5; // Default radius if not set
+
+  const colliderDesc = RAPIER.ColliderDesc.capsule(height/2, radius)
+    .setFriction(1)
+
+    .setRestitution(0.0); 
   const collider = world.createCollider(colliderDesc, body);
-  
-  // Store the physics objects in the character's userData for later access
+
+
   character.userData.rapier = { body, collider };
-  
-  // Store the offset for later use in syncing
-  character.userData.rapier.offset = new Vector3(0, -height / 2, 0);
-  
+
+
+  character.userData.rapier.offset = new Vector3(0, height, 0);
+
   return { body, collider };
-} 
+}
+

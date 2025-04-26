@@ -42,7 +42,7 @@ export class BasicCharacterController {
       this.input = new CharacterKeybordInputHandler();
     }
     this.animator = new CharacterAnimator(character);
-    this.physics = new CharacterPhysicsController(character);
+    this.physics = new CharacterPhysicsController(world,character);
     this.stateMachine = new CharacterStateMachine(this.animator);
     
     // Set initial state

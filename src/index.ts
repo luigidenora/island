@@ -2,6 +2,7 @@ import { Asset } from "@three.ez/main";
 import { ProgressManager } from "./ui/ProgressManager";
 import { Main } from "./main";
 import { LevelSelect } from "./ui/overlays/LevelSelect";
+import { ThirdPersonCamera } from "./controllers/ThirdPersonCamera";
 
 // Init progress bar UI
 const progressBar = new ProgressManager();
@@ -18,13 +19,14 @@ import("@dimforge/rapier3d").then((rapier3d) => {
   globalThis.RAPIER = rapier3d;
 
   // Initialize the main app
-  new Main();
+  const main = new Main();
+  const thirdPersonCamera = main.getThirdPersonCamera();
 
   // Hide the loading UI
   progressBar.hideProgressBar();
 
   // Mount level selector UI
-  const levelSelect = new LevelSelect();
+  const levelSelect = new LevelSelect(thirdPersonCamera);
   levelSelect.mount();
 });
 
