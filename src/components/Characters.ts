@@ -27,7 +27,7 @@ Asset.preload(
   "glTF/Characters_Tentacle.gltf"
 );
 
-export class Characters extends Group {
+export class GameCharacter extends Group {
   /**
    * Array of animation clips for this character
    */

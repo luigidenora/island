@@ -1,4 +1,4 @@
-import { Characters } from "../../components/Characters";
+import { GameCharacter } from "../../components/Characters";
 import RAPIER from "@dimforge/rapier3d";
 import { Vector3 } from "three";
 
@@ -11,7 +11,7 @@ import { Vector3 } from "three";
  * @returns The created body and collider
  */
 export function attachRapierToCharacter(
-  character: Characters,
+  character: GameCharacter,
   world: RAPIER.World
 ): { body: RAPIER.RigidBody; collider: RAPIER.Collider } {
   // Ensure the character's matrix is up to date

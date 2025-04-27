@@ -23,7 +23,7 @@ import {
   WebGLRenderer,
   WebGLRenderTarget,
 } from "three";
-import { Characters } from "../components/Characters";
+import { GameCharacter } from "../components/Characters";
 import { Island } from "../components/Island";
 import { WaterMaterial } from "../components/water/Water";
 import { DEBUG } from "../config/debug";
@@ -31,11 +31,15 @@ import { AnimateEvent, PerspectiveCameraAuto } from "@three.ez/main";
 import { type Collider, type RigidBody, type World } from "@dimforge/rapier3d";
 import { BasicCharacterController } from "../controllers/BasicCharacterController";
 import { InstancedMesh2 } from "@three.ez/instanced-mesh";
+import { SharkCharacterStateMachine } from "../controllers/CharacterStateMachine";
+import { NPCCharacterControl } from "../controllers/NPCCharacterControl";
 export class MainScene extends Scene {
   private island!: Island;
-  public player!: Characters;
+  public player!: GameCharacter;
+  public shark!: GameCharacter;
   public world!: World;
-  public characterController!: BasicCharacterController;
+  public playerCharacterController!: BasicCharacterController;
+  public sharkCharacterController!: NPCCharacterControl;
 
   /** Internal storage for objects with physics bodies to sync them with the scene. */
   // TODO: Use a new Object3D subclass to store physics objects
@@ -60,6 +64,7 @@ export class MainScene extends Scene {
     this._islandSurface();
     this._addWaterSurface();
     this._createPlayer();
+    this._createShark();
   }
 
   private _islandSurface() {
@@ -112,7 +117,7 @@ export class MainScene extends Scene {
     this.world = new RAPIER.World(gravity);
 
     this.on("animate", (e) => {
-        this._syncPhysicsObjects(e)
+      this._syncPhysicsObjects(e)
     })
   }
 
@@ -139,7 +144,7 @@ export class MainScene extends Scene {
       this.player.visible = false;
       this.userData.isRenderTargetRendering = false;
       this.overrideMaterial = depthMaterial;
-     this.detectChanges(true);
+      this.detectChanges(true);
 
 
       this.renderer.setRenderTarget(renderTarget);
@@ -151,7 +156,7 @@ export class MainScene extends Scene {
       this.userData.isRenderTargetRendering = true;
       this.player.visible = true;
 
-     this.detectChanges(true);
+      this.detectChanges(true);
       waterMaterial.update(e.total);
     });
     //@ts-ignore
@@ -161,6 +166,26 @@ export class MainScene extends Scene {
     );
 
     this.island.addToPlaceholder(water, "water");
+    this.island.addToPlaceholder(water, "water");
+  }
+
+  private _createShark() {
+    const spawnPoint = this.island.querySelector("[name=@Shark]");
+    console.assert(!!spawnPoint, "Shark spawn point not found");
+
+    this.island.remove(spawnPoint);
+
+    // Create the player character
+    this.shark = new GameCharacter("Shark", spawnPoint);
+    this.add(this.shark);
+
+    // Create the character controller with the player and physics world
+    this.sharkCharacterController = new NPCCharacterControl(
+      this.shark,
+      this.world,
+      SharkCharacterStateMachine,
+      this.player
+    );
   }
 
   private _createPlayer() {
@@ -170,13 +195,12 @@ export class MainScene extends Scene {
     this.island.remove(spawnPoint);
 
     // Create the player character
-    this.player = new Characters("Captain_Barbarossa", spawnPoint);
+    this.player = new GameCharacter("Captain_Barbarossa", spawnPoint);
     this.add(this.player);
 
-    this.player.rotateY(Math.PI); // todo remove this rotation
 
     // Create the character controller with the player and physics world
-    this.characterController = new BasicCharacterController(
+    this.playerCharacterController = new BasicCharacterController(
       this.player,
       this.world
     );
@@ -286,8 +310,8 @@ export class MainScene extends Scene {
     }
 
     // Update the character controller
-    if (this.characterController) {
-      this.characterController.update(e.delta);
+    if (this.playerCharacterController) {
+      this.playerCharacterController.update(e.delta);
     }
 
     // Sync other physics objects
@@ -328,7 +352,7 @@ export class MainScene extends Scene {
         const geometry = treeIstance.geometry;
         geometry.computeBoundingBox();
 
-        const colliderDesc = RAPIER.ColliderDesc.cuboid(0.5,4, 0.5);
+        const colliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 4, 0.5);
 
         this.world.createCollider(colliderDesc, body);
 
@@ -339,10 +363,10 @@ export class MainScene extends Scene {
 
   private _addCaveRockColliders() {
     const caveRocks = this.island.querySelectorAll(
-      "[name^=Environment_Cliff]"
+      "[name^=Environment_Cliff_Collider]"
     ) as Mesh[];
 
-    if (caveRocks.length) {
+    if (!caveRocks.length) {
       console.warn("No cave rocks found to add colliders.");
       return;
     }
@@ -366,7 +390,7 @@ export class MainScene extends Scene {
       );
       const indices = geometry.index?.array as Uint32Array;
 
-      const colliderDesc = RAPIER.ColliderDesc.convexMesh(scaledVerts);
+      const colliderDesc = RAPIER.ColliderDesc.trimesh(scaledVerts,indices);
       this.world.createCollider(colliderDesc, body);
     });
   }

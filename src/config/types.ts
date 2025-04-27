@@ -1,5 +1,5 @@
 import { AnimationAction, AnimationClip, Camera, Scene } from "three";
-import { Characters } from "../components/Characters";
+import { GameCharacter } from "../components/Characters";
 
 /**
  * Parameters required for the character controller.
@@ -8,7 +8,7 @@ import { Characters } from "../components/Characters";
 export type ControllerParams = {
     camera?: Camera;
     scene: Scene;
-            character: Characters;
+            character: GameCharacter;
         }
 
 /**

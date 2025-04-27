@@ -1,5 +1,5 @@
 import { AnimationMixer, LoopOnce, Quaternion, Vector3 } from "three";
-import { Characters } from "../components/Characters";
+import { GameCharacter } from "../components/Characters";
 import {
   CharacterAnimationName,
   CharacterAnimations,
@@ -28,7 +28,7 @@ export class CharacterAnimator {
   private _position = new Vector3();
   private _rotation = new Quaternion();
 
-  constructor(private character: Characters) {
+  constructor(private character: GameCharacter) {
     // Initialize the animation mixer
     this.mixer = new AnimationMixer(this.character);
 

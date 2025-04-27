@@ -24,7 +24,7 @@ export class Main extends MainBase {
 
     this.thirdPersonCamera = new ThirdPersonCamera({
       camera,
-      target: scene.characterController,
+      target: scene.playerCharacterController,
     });
 
     scene.on('animate', (event) => {

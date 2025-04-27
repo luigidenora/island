@@ -1,8 +1,8 @@
-import { Characters } from "../components/Characters";
+import { GameCharacter } from "../components/Characters";
 import { CharacterAnimator } from "./CharacterAnimator";
 import { CharacterKeybordInputHandler } from "./CharacterInputKeybordHandler";
 import { CharacterPhysicsController } from "./CharacterPhysicsController";
-import { CharacterStateMachine } from "./CharacterStateMachine";
+import { HumanoidCharacterStateMachine, SharkCharacterStateMachine } from "./CharacterStateMachine";
 import RAPIER from "@dimforge/rapier3d";
 import { attachRapierToCharacter } from "./physics/attachRapierToCharacter";
 import { BasicCharacterInputHandler } from "./CharacterInput";
@@ -20,34 +20,32 @@ export class BasicCharacterController {
   private input: BasicCharacterInputHandler;
   private animator: CharacterAnimator;
   private physics: CharacterPhysicsController;
-  private stateMachine: CharacterStateMachine;
+  private stateMachine: HumanoidCharacterStateMachine | SharkCharacterStateMachine;
 
   /**
    * Creates a new character controller.
    * @param character - The character to control
    * @param world - The Rapier physics world
+   * @param stateMachineClass - the class to manage the state of character
    */
-  constructor(private character: Characters, private world: RAPIER.World) {
+  constructor(private character: GameCharacter, private world: RAPIER.World, stateMachineClass = HumanoidCharacterStateMachine) {
     // Attach Rapier physics to the character
     attachRapierToCharacter(character, world);
-    
+
     // Initialize all components
-    
+
     const touchJoystick = new VirtualJoystick();
 
-    if(touchJoystick.isVisible)  {
+    if (touchJoystick.isVisible) {
       this.input = new CharacterInputTouchHandler(touchJoystick);
     }
     else {
       this.input = new CharacterKeybordInputHandler();
     }
     this.animator = new CharacterAnimator(character);
-    this.physics = new CharacterPhysicsController(world,character);
-    this.stateMachine = new CharacterStateMachine(this.animator);
-    
-    // Set initial state
-    this.stateMachine.setState("Idle");
-    
+    this.physics = new CharacterPhysicsController(world, character);
+    this.stateMachine = new stateMachineClass(this.animator);
+
     // Log initialization
     console.log("BasicCharacterController initialized", {
       characterPosition: this.character.position,
@@ -64,16 +62,16 @@ export class BasicCharacterController {
     if (!this.character) {
       return;
     }
-    
+
     // Update state machine (handles animations)
     this.stateMachine.update(delta, this.input);
-    
+
     // Update physics (handles movement)
     this.physics.update(delta, this.input);
-    
+
     // Update animator (handles animation mixer)
     this.animator.update(delta);
-    
+
     // Log debug info occasionally
     if (Math.random() < 0.01) {
       console.log("Character update", {
@@ -82,14 +80,14 @@ export class BasicCharacterController {
       });
     }
   }
-  
+
   /**
    * Gets the current position of the character.
    */
   get position() {
     return this.animator.position;
   }
-  
+
   /**
    * Gets the current rotation of the character.
    */

@@ -1,21 +1,18 @@
 import { Vector3, Quaternion } from "three"; // Immagino tu stia usando Three.js
 import type RAPIER from "@dimforge/rapier3d";
-import { Characters } from "../components/Characters";
+import { GameCharacter } from "../components/Characters";
 import { BasicCharacterInputHandler } from "./CharacterInput";
 
 export class CharacterPhysicsController {
   private body: RAPIER.RigidBody;
   private collider: RAPIER.Collider;
   private characterController: RAPIER.KinematicCharacterController;
-  private isGrounded: boolean = true;
-  private jumpForce: number = 5.0;
   private moveSpeed: number = 10.0;
   private runSpeed: number = 20.0;
   private rotationSpeed: number = 5.0;
-  private jumpVelocity: number = 0;
   private readonly GRAVITY = -9.81;
 
-  constructor(private world: RAPIER.World, private character: Characters) {
+  constructor(private world: RAPIER.World, private character: GameCharacter) {
     if (
       !character.userData.rapier?.body ||
       !character.userData.rapier?.collider
