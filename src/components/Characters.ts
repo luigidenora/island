@@ -1,5 +1,5 @@
 import { Asset } from "@three.ez/main";
-import { AnimationClip, Box3, Euler, Group, Object3D, Vector3 } from "three";
+import { AnimationClip, Euler, Group, Vector3 } from "three";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 
@@ -29,15 +29,17 @@ Asset.preload(
 
 export class GameCharacter extends Group {
   /**
+   * The character position when the game starts
+   */
+  public initialPosition: Vector3;
+  /**
    * Array of animation clips for this character
    */
   public animations: AnimationClip[];
-
   /**
    * The name/type of this character
    */
   public name: CharacterName;
-
   /**
    * The height of the character model, used for scaling and positioning
    */
@@ -46,6 +48,11 @@ export class GameCharacter extends Group {
    * The radius of the character model, used for collision detection
    */
   public radius: number = 0.5; // Default radius for characters
+  /**
+   * the ability to swim
+   * @default false
+   */
+  public canSwim: boolean = false; // Default swimming capability
 
   /**
    * Creates a new character instance.
@@ -71,5 +78,6 @@ export class GameCharacter extends Group {
     // Set initial transform
     this.position.copy(position);
     this.rotation.copy(rotation);
+    this.initialPosition = position.clone();
   }
 }

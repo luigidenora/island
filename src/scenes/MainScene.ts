@@ -1,3 +1,6 @@
+import { type Collider, type RigidBody, type World } from "@dimforge/rapier3d";
+import { InstancedEntity, InstancedMesh2 } from "@three.ez/instanced-mesh";
+import { AnimateEvent, PerspectiveCameraAuto } from "@three.ez/main";
 import {
   BufferAttribute,
   BufferGeometry,
@@ -8,7 +11,6 @@ import {
   HemisphereLight,
   LineBasicMaterial,
   LineSegments,
-  Material,
   Mesh,
   MeshDepthMaterial,
   NearestFilter,
@@ -23,16 +25,14 @@ import {
   WebGLRenderer,
   WebGLRenderTarget,
 } from "three";
-import { GameCharacter } from "../components/Characters";
+import { CharacterName, GameCharacter } from "../components/Characters";
 import { Island } from "../components/Island";
 import { WaterMaterial } from "../components/water/Water";
 import { DEBUG } from "../config/debug";
-import { AnimateEvent, PerspectiveCameraAuto } from "@three.ez/main";
-import { type Collider, type RigidBody, type World } from "@dimforge/rapier3d";
 import { BasicCharacterController } from "../controllers/BasicCharacterController";
-import { InstancedMesh2 } from "@three.ez/instanced-mesh";
 import { SharkCharacterStateMachine } from "../controllers/CharacterStateMachine";
 import { NPCCharacterControl } from "../controllers/NPCCharacterControl";
+
 export class MainScene extends Scene {
   private island!: Island;
   public player!: GameCharacter;
@@ -40,11 +40,13 @@ export class MainScene extends Scene {
   public world!: World;
   public playerCharacterController!: BasicCharacterController;
   public sharkCharacterController!: NPCCharacterControl;
+  public enemies: GameCharacter[] = [];
+  public enemiesCharacterController: NPCCharacterControl[] = [];
 
   /** Internal storage for objects with physics bodies to sync them with the scene. */
   // TODO: Use a new Object3D subclass to store physics objects
   private _physicsObjects: {
-    object3D: Object3D;
+    object3D: Object3D | InstancedEntity;
     body: RigidBody;
     collider: Collider;
   }[] = [];
@@ -53,6 +55,13 @@ export class MainScene extends Scene {
     new BufferGeometry(),
     new LineBasicMaterial({ vertexColors: true })
   );
+
+  private readonly availableEnemies: CharacterName[] = [
+    "Skeleton_Headless",
+    "Skeleton",
+    "Sharky",
+    "Mako",
+  ];
 
   constructor(
     private camera: PerspectiveCameraAuto,
@@ -64,6 +73,7 @@ export class MainScene extends Scene {
     this._islandSurface();
     this._addWaterSurface();
     this._createPlayer();
+    this._createEnemies();
     this._createShark();
   }
 
@@ -79,6 +89,7 @@ export class MainScene extends Scene {
 
     this._addCaveRockColliders();
     this._addTreeColliders();
+    this._addBarrelColliders();
 
     const worldPos = terrain.localToWorld(new Vector3());
     const worldQuat = new Quaternion();
@@ -115,10 +126,12 @@ export class MainScene extends Scene {
 
     const gravity = new RAPIER.Vector3(0, -9.81, 0);
     this.world = new RAPIER.World(gravity);
-
-    this.on("animate", (e) => {
-      this._syncPhysicsObjects(e)
-    })
+    this.world.numSolverIterations = 1;
+    this.world.timestep = 1 / 30; // 30 hz
+ 
+    this.on("beforeanimate", (e) => {
+      this._syncPhysicsObjects(e);
+    });
   }
 
   private _addWaterSurface() {
@@ -136,7 +149,7 @@ export class MainScene extends Scene {
 
     const water = new Mesh(waterGeometry, waterMaterial);
 
-    this.on("afteranimate", (e) => {
+    this.on("beforeanimate", (e) => {
       if (!e) return;
 
       // Render depth pass
@@ -145,7 +158,6 @@ export class MainScene extends Scene {
       this.userData.isRenderTargetRendering = false;
       this.overrideMaterial = depthMaterial;
       this.detectChanges(true);
-
 
       this.renderer.setRenderTarget(renderTarget);
       this.renderer.render(this, this.camera);
@@ -169,6 +181,35 @@ export class MainScene extends Scene {
     this.island.addToPlaceholder(water, "water");
   }
 
+  private _createEnemies() {
+    const spawnPoint = this.island.querySelectorAll("[name^=@Enemy_Spawn]");
+
+    for (const enemy of spawnPoint) {
+      // Create the character
+      const randomEnemy =
+        this.availableEnemies[
+          Math.floor(Math.random() * this.availableEnemies.length)
+        ];
+      // Lift the enemy position by 1 unit
+      enemy.position.y += 1;
+
+      const enemyCharacter = new GameCharacter(randomEnemy, enemy);
+      enemy.parent?.add(enemyCharacter);
+
+      enemy.removeFromParent();
+
+      // Create the character controller with npc and physics world
+      const scrullCharacterController = new NPCCharacterControl(
+        enemyCharacter,
+        this.world,
+        this.player
+      );
+
+      this.enemies.push(enemyCharacter);
+      this.enemiesCharacterController.push(scrullCharacterController);
+    }
+  }
+
   private _createShark() {
     const spawnPoint = this.island.querySelector("[name=@Shark]");
     console.assert(!!spawnPoint, "Shark spawn point not found");
@@ -177,14 +218,17 @@ export class MainScene extends Scene {
 
     // Create the player character
     this.shark = new GameCharacter("Shark", spawnPoint);
+    this.shark.canSwim = true;
     this.add(this.shark);
 
     // Create the character controller with the player and physics world
     this.sharkCharacterController = new NPCCharacterControl(
       this.shark,
       this.world,
-      SharkCharacterStateMachine,
-      this.player
+      this.player,
+      100.0,
+      1.0,
+      SharkCharacterStateMachine
     );
   }
 
@@ -197,7 +241,6 @@ export class MainScene extends Scene {
     // Create the player character
     this.player = new GameCharacter("Captain_Barbarossa", spawnPoint);
     this.add(this.player);
-
 
     // Create the character controller with the player and physics world
     this.playerCharacterController = new BasicCharacterController(
@@ -314,35 +357,46 @@ export class MainScene extends Scene {
       this.playerCharacterController.update(e.delta);
     }
 
+    if (this.sharkCharacterController) {
+      this.sharkCharacterController.update(e.delta);
+    }
+    // Update the enemies
+    for (const enemy of this.enemiesCharacterController) {
+      enemy.update(e.delta);
+    }
+
     // Sync other physics objects
     for (const { object3D, body } of this._physicsObjects) {
-      // Skip the player as it's handled by the character controller
-      if (object3D === this.player) continue;
 
       const pos = body.translation();
       object3D.position.set(pos.x, pos.y, pos.z);
 
       const rot = body.rotation();
       object3D.quaternion.set(rot.x, rot.y, rot.z, rot.w);
+
+      if((object3D as InstancedEntity).isInstanceEntity) {
+      (object3D as InstancedEntity).owner.worldToLocal(object3D.position);
+      }
+      object3D.updateMatrix(); 
     }
   }
+
   private _addTreeColliders() {
-    const instanced = (this.island.querySelectorAll("[name^=Palm]") as InstancedMesh2[]);
+    const instanced = this.island.querySelectorAll(
+      "[name^=Palm]"
+    ) as InstancedMesh2[];
     if (!instanced.length) {
       console.warn("No tree found to add colliders.");
       return;
     }
 
     instanced.forEach((treeIstance) => {
-
       treeIstance.instances.forEach((tree) => {
         const treePos = tree.position;
-
 
         const worldPos = treeIstance.localToWorld(treePos.clone());
         const worldQuat = new Quaternion();
         treeIstance.getWorldQuaternion(worldQuat);
-
 
         const bodyDesc = RAPIER.RigidBodyDesc.fixed()
           .setTranslation(worldPos.x, worldPos.y, worldPos.z)
@@ -355,10 +409,74 @@ export class MainScene extends Scene {
         const colliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 4, 0.5);
 
         this.world.createCollider(colliderDesc, body);
-
-      })
+      });
     });
+  }
 
+  private _addBarrelColliders() {
+    const instanced = this.island.querySelectorAll(
+      "[name*=Barrel]"
+    ) as InstancedMesh2[];
+    if (!instanced.length) {
+      console.warn("No barrel found to add colliders.");
+      return;
+    }
+
+    // const geometry = instanced[0].geometry;
+    // const material = instanced[0].material;
+    // const count = instanced.count;
+    // const barrelNewInstance = new InstancedMesh2(geometry, material, { capacity: count }); 
+
+    instanced.forEach((barrelInstance) => {
+      barrelInstance.instances.forEach((barrel) => {
+        const worldPos = barrelInstance.localToWorld(barrel.position.clone());
+        barrel.position.copy(worldPos)
+        const worldQuat = new Quaternion();
+        barrelInstance.getWorldQuaternion(worldQuat);
+        barrel.quaternion.copy(worldQuat);
+        const worldScale = barrelInstance.getWorldScale(new Vector3());
+        barrel.scale.copy(worldScale);
+        barrel.updateMatrix();        
+
+        const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
+          .setTranslation(worldPos.x, worldPos.y, worldPos.z)
+          .setRotation(worldQuat)
+          .setLinearDamping(0.5) // Reduce linear damping for more movement
+          .setAngularDamping(0.2) // Reduce angular damping for more rotation
+          .setAdditionalMass(2.0); // Add more mass for better physics interaction
+
+        const body = this.world.createRigidBody(bodyDesc);
+
+        const geometry = barrelInstance.geometry;
+        geometry.computeBoundingBox();
+
+        const box = geometry.boundingBox;
+
+        if(!box) {
+          console.warn("Bounding box not found for barrel geometry.");
+          return;
+        }
+
+        const colliderDesc = RAPIER.ColliderDesc.cylinder((box?.max.y - box?.min.y), box?.max.x - box?.min.x)
+          .setTranslation(0, box?.max.y - box?.min.y, 0)
+          .setRotation(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2))
+          .setRestitution(0 ) // Less bounce for heavy object
+          .setFriction(0.7) // Good friction
+          .setDensity(1); // Much higher density to make it heavier
+
+
+        this.world.createCollider(colliderDesc, body);
+      
+        // // add to physics objects
+        this._physicsObjects.push({
+          object3D: barrel,
+          body,
+          collider: this.world.createCollider(colliderDesc, body),
+        });
+      });
+      barrelInstance.removeFromParent();
+      this.add(barrelInstance);
+    });
   }
 
   private _addCaveRockColliders() {
@@ -390,8 +508,9 @@ export class MainScene extends Scene {
       );
       const indices = geometry.index?.array as Uint32Array;
 
-      const colliderDesc = RAPIER.ColliderDesc.trimesh(scaledVerts,indices);
+      const colliderDesc = RAPIER.ColliderDesc.trimesh(scaledVerts, indices);
       this.world.createCollider(colliderDesc, body);
+      rock.removeFromParent();
     });
   }
 }

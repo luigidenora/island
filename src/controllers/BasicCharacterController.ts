@@ -1,13 +1,17 @@
-import { GameCharacter } from "../components/Characters";
-import { CharacterAnimator } from "./CharacterAnimator";
-import { CharacterKeybordInputHandler } from "./CharacterInputKeybordHandler";
-import { CharacterPhysicsController } from "./CharacterPhysicsController";
-import { HumanoidCharacterStateMachine, SharkCharacterStateMachine } from "./CharacterStateMachine";
 import RAPIER from "@dimforge/rapier3d";
-import { attachRapierToCharacter } from "./physics/attachRapierToCharacter";
-import { BasicCharacterInputHandler } from "./CharacterInput";
-import { CharacterInputTouchHandler } from "./CharacterInputTouchHandler";
+import { Vector3 } from "three";
+import { GameCharacter } from "../components/Characters";
 import { VirtualJoystick } from "../components/virtual-joystick/VirtualJoystick";
+import { CharacterAnimator } from "./CharacterAnimator";
+import { BasicCharacterInputHandler } from "./CharacterInput";
+import { CharacterKeybordInputHandler } from "./CharacterInputKeybordHandler";
+import { CharacterInputTouchHandler } from "./CharacterInputTouchHandler";
+import { CharacterPhysicsController } from "./CharacterPhysicsController";
+import {
+  HumanoidCharacterStateMachine,
+  SharkCharacterStateMachine,
+} from "./CharacterStateMachine";
+import { attachRapierToCharacter } from "./physics/attachRapierToCharacter";
 
 /**
  * Main character controller that orchestrates all components.
@@ -17,10 +21,13 @@ import { VirtualJoystick } from "../components/virtual-joystick/VirtualJoystick"
  * 3. Providing a clean interface for the rest of the application
  */
 export class BasicCharacterController {
-  private input: BasicCharacterInputHandler;
-  private animator: CharacterAnimator;
-  private physics: CharacterPhysicsController;
-  private stateMachine: HumanoidCharacterStateMachine | SharkCharacterStateMachine;
+  protected input: BasicCharacterInputHandler;
+  protected animator: CharacterAnimator;
+  protected physics: CharacterPhysicsController;
+  protected stateMachine:
+    | HumanoidCharacterStateMachine
+    | SharkCharacterStateMachine;
+  public initialPosition: Vector3;
 
   /**
    * Creates a new character controller.
@@ -28,9 +35,15 @@ export class BasicCharacterController {
    * @param world - The Rapier physics world
    * @param stateMachineClass - the class to manage the state of character
    */
-  constructor(private character: GameCharacter, private world: RAPIER.World, stateMachineClass = HumanoidCharacterStateMachine) {
+  constructor(
+    protected character: GameCharacter,
+    protected world: RAPIER.World,
+    stateMachineClass = HumanoidCharacterStateMachine
+  ) {
     // Attach Rapier physics to the character
     attachRapierToCharacter(character, world);
+
+    this.initialPosition = character.position.clone();
 
     // Initialize all components
 
@@ -38,19 +51,12 @@ export class BasicCharacterController {
 
     if (touchJoystick.isVisible) {
       this.input = new CharacterInputTouchHandler(touchJoystick);
-    }
-    else {
+    } else {
       this.input = new CharacterKeybordInputHandler();
     }
     this.animator = new CharacterAnimator(character);
     this.physics = new CharacterPhysicsController(world, character);
     this.stateMachine = new stateMachineClass(this.animator);
-
-    // Log initialization
-    console.log("BasicCharacterController initialized", {
-      characterPosition: this.character.position,
-      characterRotation: this.character.quaternion,
-    });
   }
 
   /**
@@ -63,6 +69,8 @@ export class BasicCharacterController {
       return;
     }
 
+    this.checkCharacterFall();
+
     // Update state machine (handles animations)
     this.stateMachine.update(delta, this.input);
 
@@ -71,13 +79,12 @@ export class BasicCharacterController {
 
     // Update animator (handles animation mixer)
     this.animator.update(delta);
+  }
 
-    // Log debug info occasionally
-    if (Math.random() < 0.01) {
-      console.log("Character update", {
-        characterPosition: this.character.position,
-        characterRotation: this.character.quaternion,
-      });
+  // Controlla se l'NPC è caduto in acqua
+  protected checkCharacterFall() {
+    if (this.character.position.y < -5) {
+      this._respawnAtInitialPosition();
     }
   }
 
@@ -94,4 +101,16 @@ export class BasicCharacterController {
   get rotation() {
     return this.animator.rotation;
   }
-} 
+
+  protected _respawnAtInitialPosition(): void {
+    // Resetta la posizione dell'NPC al punto iniziale
+    this.character.position.copy(this.initialPosition);
+
+    // Reset the physics body position
+    this.physics.body.setNextKinematicTranslation({
+      x: this.initialPosition.x,
+      y: 10,
+      z: this.initialPosition.z,
+    });
+  }
+}

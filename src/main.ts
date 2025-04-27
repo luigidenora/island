@@ -3,7 +3,6 @@ import { CAMERA_CONFIG } from './config/constants';
 import { DEBUG } from './config/debug';
 import { ThirdPersonCamera } from './controllers/ThirdPersonCamera';
 import { MainScene } from './scenes/MainScene';
-import { LevelSelect } from './ui/overlays/LevelSelect';
 import './style';
 import './ui/styles/progress-bar.css';
 import './ui/styles/ui.css';

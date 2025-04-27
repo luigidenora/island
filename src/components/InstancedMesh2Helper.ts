@@ -7,6 +7,7 @@ export function parseToInstancedMesh2(mesh: InstancedMesh, params: InstancedMesh
   params.capacity ??= mesh.count;
 
   const instancedMesh = new InstancedMesh2(mesh.geometry, mesh.material, params);
+  instancedMesh.castShadow = true;
 
   instancedMesh.name = (mesh.material as Material).name;
   

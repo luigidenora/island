@@ -4,7 +4,7 @@ import { GameCharacter } from "../components/Characters";
 import { BasicCharacterInputHandler } from "./CharacterInput";
 
 export class CharacterPhysicsController {
-  private body: RAPIER.RigidBody;
+  public body: RAPIER.RigidBody;
   private collider: RAPIER.Collider;
   private characterController: RAPIER.KinematicCharacterController;
   private moveSpeed: number = 10.0;
@@ -27,14 +27,18 @@ export class CharacterPhysicsController {
     this.characterController.setApplyImpulsesToDynamicBodies(true);
     this.characterController.enableSnapToGround(0.5);
     this.characterController.enableAutostep(0.5, 0.2, true);
-    this.characterController.setMaxSlopeClimbAngle(45 * Math.PI / 180);
-    this.characterController.setMinSlopeSlideAngle(30 * Math.PI / 180);
+    this.characterController.setMaxSlopeClimbAngle((45 * Math.PI) / 180);
+    this.characterController.setMinSlopeSlideAngle((30 * Math.PI) / 180);
   }
 
   update(delta: number, input: BasicCharacterInputHandler): void {
     const desiredMove = new Vector3();
-    const forward = new Vector3(0, 0, 1).applyQuaternion(this.character.quaternion);
-    const right = new Vector3(1, 0, 0).applyQuaternion(this.character.quaternion);
+    const forward = new Vector3(0, 0, 1).applyQuaternion(
+      this.character.quaternion
+    );
+    const right = new Vector3(1, 0, 0).applyQuaternion(
+      this.character.quaternion
+    );
 
     if (input.keys.forward) desiredMove.add(forward);
     if (input.keys.backward) desiredMove.sub(forward);
@@ -49,8 +53,11 @@ export class CharacterPhysicsController {
     desiredMove.multiplyScalar(speed * delta);
 
     // Apply gravity
-    desiredMove.y += this.GRAVITY * delta;
-
+    if (this.character.canSwim && this.body.translation().y < 5) {
+      desiredMove.y = 0; // No gravity effect when swimming
+    } else {
+      desiredMove.y += this.GRAVITY * delta;
+    }
     // Use Rapier's character controller to compute movement
     this.characterController.computeColliderMovement(this.collider, {
       x: desiredMove.x,
@@ -73,14 +80,21 @@ export class CharacterPhysicsController {
     } else if (input.keys.left) {
       this._rotateCharacter(delta, 1);
     }
-
     // Check if the character is in the void and reset position if necessary
     if (this.body.translation().y < -5) {
-      this.body.setNextKinematicTranslation({
-        x: 0, // Default X position
-        y: 10, // Default Y position above ground
-        z: 0  // Default Z position
-      });
+      if (!this.character.canSwim) {
+        this.body.setNextKinematicTranslation({
+          x: this.character.initialPosition.x,
+          y: this.character.initialPosition.y + 1, // Adjust height to avoid falling
+          z: this.character.initialPosition.z,
+        });
+      } else {
+        this.body.setNextKinematicTranslation({
+          x: this.body.translation().x,
+          y: 0.2 * Math.sin(delta), // Adjust height to avoid falling
+          z: this.body.translation().z,
+        });
+      }
     }
 
     // Sync visuals with physics
@@ -89,7 +103,12 @@ export class CharacterPhysicsController {
 
   private _rotateCharacter(delta: number, direction: number): void {
     const rotationAmount = this.rotationSpeed * delta * direction;
+
+    // Ottieni la posizione corrente del corpo
+    const currentPosition = this.body.translation();
     const currentRotation = this.body.rotation();
+
+    // Crea la nuova rotazione
     const newRotation = new Quaternion()
       .setFromAxisAngle(new Vector3(0, 1, 0), rotationAmount)
       .multiply(
@@ -101,6 +120,7 @@ export class CharacterPhysicsController {
         )
       );
 
+    // Imposta la nuova rotazione
     this.body.setNextKinematicRotation({
       x: newRotation.x,
       y: newRotation.y,

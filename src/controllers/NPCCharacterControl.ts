@@ -1,101 +1,138 @@
 import { GameCharacter } from "../components/Characters";
-import { CharacterAnimator } from "./CharacterAnimator";
-import { CharacterPhysicsController } from "./CharacterPhysicsController";
 import RAPIER from "@dimforge/rapier3d";
-import { attachRapierToCharacter } from "./physics/attachRapierToCharacter";
-import { Vector3 } from "three";
+import { CircleGeometry, LineBasicMaterial, BufferGeometry, Line, Vector3, Mesh, MeshBasicMaterial } from "three";
+import { HumanoidCharacterStateMachine } from "./CharacterStateMachine";
+import { BasicCharacterController } from "./BasicCharacterController";
+import { BasicCharacterInputHandler } from "./CharacterInput";
+import { DEBUG } from "../config/debug";
 
-export class NPCCharacterControl {
-  private animator: CharacterAnimator;
-  private physics: CharacterPhysicsController;
-  private player: GameCharacter;
-  private attackRange: number = 5.0; // Default attack range
-  private attackCooldown: number = 2.0; // Cooldown in seconds
-  private lastAttackTime: number = 0;
-  private patrolDirection: number = 1; // 1 for forward, -1 for backward
-  private patrolTimer: number = 0;
-  private patrolDuration: number = 5.0; // Time in seconds to patrol in one direction
-
-  constructor(private npc: GameCharacter, private world: RAPIER.World, player: GameCharacter) {
-    // Attach Rapier physics to the NPC
-    attachRapierToCharacter(npc, world);
-
-    // Initialize components
-    this.animator = new CharacterAnimator(npc);
-    this.physics = new CharacterPhysicsController(world, npc);
-    this.player = player;
+/**
+ * AI-driven input handler for NPCs that implements chase and attack behavior
+ */
+class NPCInputHandler extends BasicCharacterInputHandler {
+  constructor(
+    private npc: GameCharacter,
+    private player: GameCharacter,
+    private attackRange: number = 1.0,
+    private attackCooldown: number = 2.0
+  ) {
+    super();
   }
 
-  update(delta: number): void {
-    if (!this.npc || !this.player) {
-      return;
-    }
-
-    // Calculate distance to the player
-    const distanceToPlayer = this.npc.position.distanceTo(this.player.position);
-
-    if (distanceToPlayer <= this.attackRange) {
-      this._attackPlayer(delta);
-    } else if (distanceToPlayer > this.attackRange) {
-      this._patrol(delta);
-    }
-
-    // Update animator
-    this.animator.update(delta);
-  }
-
-  private _patrol(delta: number): void {
-    this.patrolTimer += delta;
-
-    if (this.patrolTimer >= this.patrolDuration) {
-      this.patrolDirection *= -1; // Reverse direction
-      this.patrolTimer = 0; // Reset timer
-    }
-
-    const patrolVector = new Vector3(0, 0, this.patrolDirection * delta * 2.0); // Patrol speed
-    this.npc.position.add(patrolVector);
-
-    this.physics.update(delta, {
-      keys: {
-        forward: this.patrolDirection === 1,
-        backward: this.patrolDirection === -1,
-        left: false,
-        right: false,
-        jump: false,
-        run: false,
-        sword: false,
-      },
+  update(delta: number) {
+    // Reset all inputs
+    Object.keys(this.keys).forEach(key => {
+      this.keys[key as keyof typeof this.keys] = false;
     });
+    // Non facciamo nulla - l'NPC resta fermo
+  }
+}
+
+/**
+ * NPC Character Controller that extends BasicCharacterController with AI behavior
+ */
+export class NPCCharacterControl extends BasicCharacterController {
+  private debugMesh?: Mesh;
+  private debugPath?: Line;
+  private debugPatrolPath?: Line;
+  protected input: NPCInputHandler;
+
+  constructor(
+    character: GameCharacter, 
+    world: RAPIER.World, 
+    player: GameCharacter,
+    private attackRange: number = 10.0,
+    private attackCooldown: number = 2.0,
+    stateMachineClass = HumanoidCharacterStateMachine
+  ) {
+    super(character, world, stateMachineClass);
+    
+    this.input = new NPCInputHandler(character, player, attackRange, attackCooldown);
+
+    if (DEBUG) {
+      this._createDebugVisuals();
+    }
   }
 
-  private _runTowardsPlayer(delta: number): void {
-    const direction = new Vector3().subVectors(this.player.position, this.npc.position).normalize();
-    const moveVector = direction.multiplyScalar(delta * 4.0); // NPC running speed
+  override update(delta: number): void {
+    if(this.character.name !== "Shark") {
+    this.checkCharacterFall();
+    }
 
-    this.physics.update(delta, {
-      keys: {
-        forward: true,
-        backward: false,
-        left: false,
-        right: false,
-        jump: false,
-        run: true, // Enable running
-        sword: false,
-      },
-    });
+    (this.input as NPCInputHandler).update(delta);
+    super.update(delta);
 
-    this.npc.position.add(moveVector);
+    if (DEBUG) {
+      this._updateDebugVisuals();
+    }
   }
 
-  private _attackPlayer(delta: number): void {
-    const currentTime = performance.now() / 1000; // Convert to seconds
+  private _createDebugVisuals(): void {
+    // Attack range circle
+    const geometry = new CircleGeometry(this.attackRange, 32);
+    const material = new MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+    this.debugMesh = new Mesh(geometry, material);
+    this.debugMesh.rotation.x = -Math.PI / 2;
+    this.character.add(this.debugMesh);
 
-    if (currentTime - this.lastAttackTime >= this.attackCooldown) {
-      console.log("NPC attacks the player!");
-      this.animator.playOnce("Sword");
-      this.lastAttackTime = currentTime;
-    } else {
-      this._runTowardsPlayer(delta); // Run towards the player while waiting for cooldown
+    // Path line to player
+    const pathGeometry = new BufferGeometry();
+    const pathMaterial = new LineBasicMaterial({ color: 0x00ff00 });
+    this.debugPath = new Line(pathGeometry, pathMaterial);
+    this.character.parent?.add(this.debugPath);
+
+    // Patrol path circle - fixed position
+    const patrolPoints = [];
+    const patrolRadius = 3.0;
+    const segments = 32;
+    const startPosition = this.character.position.clone();
+    
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI * 2;
+      patrolPoints.push(new Vector3(
+        startPosition.x + Math.cos(angle) * patrolRadius,
+        startPosition.y + 0.1, // Leggermente sopra il terreno
+        startPosition.z + Math.sin(angle) * patrolRadius
+      ));
+    }
+    const patrolGeometry = new BufferGeometry().setFromPoints(patrolPoints);
+    const patrolMaterial = new LineBasicMaterial({ color: 0x0000ff });
+    this.debugPatrolPath = new Line(patrolGeometry, patrolMaterial);
+    this.character.parent?.add(this.debugPatrolPath); // Aggiungiamo alla scena invece che al character
+  }
+
+  private _updateDebugVisuals(): void {
+    if (this.debugMesh) {
+      this.debugMesh.position.y = 0.1;
+    }
+
+    if (this.debugPath && this.input instanceof NPCInputHandler) {
+      const points = [
+        this.character.position.clone(),
+        (this.input as any).player.position.clone()
+      ];
+      points.forEach(p => p.y += 0.1);
+      this.debugPath.geometry.setFromPoints(points);
+    }
+  }
+
+  dispose(): void {
+    if (this.debugMesh) {
+      this.debugMesh.geometry.dispose();
+      this.debugMesh.material.dispose();
+      this.character.remove(this.debugMesh);
+    }
+
+    if (this.debugPath) {
+      this.debugPath.geometry.dispose();
+      (this.debugPath.material as LineBasicMaterial).dispose();
+      this.debugPath.removeFromParent();
+    }
+
+    if (this.debugPatrolPath) {
+      this.debugPatrolPath.geometry.dispose();
+      (this.debugPatrolPath.material as LineBasicMaterial).dispose();
+      this.debugPatrolPath.removeFromParent();
     }
   }
 }
