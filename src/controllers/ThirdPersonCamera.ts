@@ -19,9 +19,6 @@ export class ThirdPersonCamera {
     // Default offset values
     this._offset = new Vector3(-20.0, 200.0, 350.0);
     this._lookAtOffset = new Vector3(0.0, 1.5, 10.0);
-    // // debug values
-    // this._offset = new Vector3(200, 500, 3);
-    // this._lookAtOffset = new Vector3(0.0, 10, 50);
 
     this._currentPosition.copy(this._calculateIdealOffset());
     this._currentLookat.copy(this._calculateIdealLookat());
@@ -96,9 +93,10 @@ export class ThirdPersonCamera {
     const idealLookat = this._calculateIdealLookat();
 
     // Calculate smoothing factor
-    const t = 1.0 - Math.pow(0.001, timeElapsed);
+    const t = 1.0 - Math.pow(0.02, timeElapsed);
 
     // Interpolate positions
+    
     this._currentPosition.lerp(idealOffset, t);
     this._currentLookat.lerp(idealLookat, t);
 
