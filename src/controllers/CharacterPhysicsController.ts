@@ -1,4 +1,4 @@
-import { Vector3, Quaternion } from "three"; // Immagino tu stia usando Three.js
+import { Vector3, Quaternion } from "three";
 import type RAPIER from "@dimforge/rapier3d";
 import { GameCharacter } from "../components/Characters";
 import { BasicCharacterInputHandler } from "./CharacterInput";
@@ -9,8 +9,9 @@ export class CharacterPhysicsController {
   private characterController: RAPIER.KinematicCharacterController;
   private moveSpeed: number = 10.0;
   private runSpeed: number = 20.0;
-  private rotationSpeed: number = 5.0;
+  private rotationSpeed: number = 8.0;
   private readonly GRAVITY = -9.81;
+  private direction: Vector3 = new Vector3(0, 0, 1);
 
   constructor(private world: RAPIER.World, private character: GameCharacter) {
     if (
@@ -23,6 +24,7 @@ export class CharacterPhysicsController {
     this.body = character.userData.rapier.body;
     this.collider = character.userData.rapier.collider;
 
+    // Initialize character controller with proper settings
     this.characterController = this.world.createCharacterController(0.01);
     this.characterController.setApplyImpulsesToDynamicBodies(true);
     this.characterController.enableSnapToGround(0.5);
@@ -32,18 +34,46 @@ export class CharacterPhysicsController {
   }
 
   update(delta: number, input: BasicCharacterInputHandler): void {
-    const desiredMove = new Vector3();
-    const forward = new Vector3(0, 0, 1).applyQuaternion(
-      this.character.quaternion
-    );
-    const right = new Vector3(1, 0, 0).applyQuaternion(
-      this.character.quaternion
+    // Update direction based on input
+    this._updateDirection(delta, input);
+
+    // Handle movement using the updated direction
+    this._handleMovement(delta, input);
+
+    // Sync visuals with physics
+    this._syncVisuals();
+  }
+
+  private _updateDirection(delta: number, input: BasicCharacterInputHandler): void {
+    // Calcola la rotazione in base all'input
+    if (input.keys.right || input.keys.left) {
+      // Ruota direttamente la direzione intorno all'asse Y
+      const rotationAngle = (input.keys.right ? -1 : 1) * this.rotationSpeed * delta;
+      this.direction.applyAxisAngle(new Vector3(0, 1, 0), rotationAngle);
+      this.direction.normalize();
+    }
+
+    // Crea la rotazione dal vettore direzione
+    const targetRotation = new Quaternion().setFromUnitVectors(
+      new Vector3(0, 0, 1), // Direzione forward di default
+      this.direction
     );
 
-    if (input.keys.forward) desiredMove.add(forward);
-    if (input.keys.backward) desiredMove.sub(forward);
-    if (input.keys.left) desiredMove.sub(right);
-    if (input.keys.right) desiredMove.add(right);
+    // Applica la rotazione al rigid body
+    this.body.setNextKinematicRotation({
+      x: targetRotation.x,
+      y: targetRotation.y,
+      z: targetRotation.z,
+      w: targetRotation.w,
+    });
+  }
+
+  private _handleMovement(delta: number, input: BasicCharacterInputHandler): void {
+    const desiredMove = new Vector3();
+
+    // Usa la direzione corrente per il movimento
+    if (input.keys.forward) desiredMove.add(this.direction);
+    if (input.keys.backward) desiredMove.sub(this.direction);
 
     if (desiredMove.lengthSq() > 0) {
       desiredMove.normalize();
@@ -58,7 +88,8 @@ export class CharacterPhysicsController {
     } else {
       desiredMove.y += this.GRAVITY * delta;
     }
-    // Use Rapier's character controller to compute movement
+
+    // Use Rapier's character controller for movement
     this.characterController.computeColliderMovement(this.collider, {
       x: desiredMove.x,
       y: desiredMove.y,
@@ -74,78 +105,41 @@ export class CharacterPhysicsController {
       z: this.body.translation().z + correctedMovement.z,
     });
 
-    // Handle rotation
-    if (input.keys.right) {
-      this._rotateCharacter(delta, -1);
-    } else if (input.keys.left) {
-      this._rotateCharacter(delta, 1);
-    }
     // Check if the character is in the void and reset position if necessary
     if (this.body.translation().y < -5) {
       if (!this.character.canSwim) {
         this.body.setNextKinematicTranslation({
           x: this.character.initialPosition.x,
-          y: this.character.initialPosition.y + 1, // Adjust height to avoid falling
+          y: this.character.initialPosition.y + 1,
           z: this.character.initialPosition.z,
         });
       } else {
         this.body.setNextKinematicTranslation({
           x: this.body.translation().x,
-          y: 0.2 * Math.sin(delta), // Adjust height to avoid falling
+          y: 0.2 * Math.sin(delta),
           z: this.body.translation().z,
         });
       }
     }
-
-    // Sync visuals with physics
-    this._syncVisuals();
-  }
-
-  private _rotateCharacter(delta: number, direction: number): void {
-    const rotationAmount = this.rotationSpeed * delta * direction;
-
-    // Ottieni la posizione corrente del corpo
-    const currentPosition = this.body.translation();
-    const currentRotation = this.body.rotation();
-
-    // Crea la nuova rotazione
-    const newRotation = new Quaternion()
-      .setFromAxisAngle(new Vector3(0, 1, 0), rotationAmount)
-      .multiply(
-        new Quaternion(
-          currentRotation.x,
-          currentRotation.y,
-          currentRotation.z,
-          currentRotation.w
-        )
-      );
-
-    // Imposta la nuova rotazione
-    this.body.setNextKinematicRotation({
-      x: newRotation.x,
-      y: newRotation.y,
-      z: newRotation.z,
-      w: newRotation.w,
-    });
   }
 
   private _syncVisuals(): void {
     const position = this.body.translation();
     const rotation = this.body.rotation();
 
-    // Applica l'offset verso l'alto per allineare la mesh sopra la capsula
+    // Apply the offset towards the top to align the mesh above the capsule
     this.character.position.set(
       position.x,
       position.y - (this.character.userData.rapier?.offset?.y || 0),
       position.z
     );
 
-    const quaternion = new Quaternion(
+    // Sync rotation
+    this.character.quaternion.set(
       rotation.x,
       rotation.y,
       rotation.z,
       rotation.w
     );
-    this.character.quaternion.copy(quaternion);
   }
 }
