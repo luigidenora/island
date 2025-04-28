@@ -14,11 +14,18 @@ export class GameHUD {
 
     constructor() {
         this.container = document.createElement('div');
-        this.container.className = 'hud hidden';
+        this.container.className = 'hud';
         
         // Create avatar hexagon
         const avatarHex = document.createElement('div');
         avatarHex.className = 'avatar-hex';
+
+        // add img to avatarHex
+        const avatarImg = document.createElement('img');
+        avatarImg.src = 'assets/avatar.png';
+        avatarImg.alt = 'Avatar';
+        avatarImg.className = 'avatar-hex__img';
+        avatarHex.appendChild(avatarImg);
         
         // Create score container with label
         this.scoreContainer = document.createElement('div');
@@ -130,33 +137,12 @@ export class GameHUD {
         }, this.animationDuration);
     }
 
-    private startSimulation(): void {
-        // Increment score every 500ms
-        this.intervalIds.push(window.setInterval(() => {
-            const increment = Math.floor(Math.random() * 1000900);
-            this.score = this._score + increment;
-        }, 500));
-
-        // Simulate health changes
-        this.intervalIds.push(window.setInterval(() => {
-            const newHealth = Math.max(1, Math.floor(Math.random() * this.maxHealth) + 1);
-            this.health = newHealth;
-        }, 500));
-    }
-
-    private stopSimulation(): void {
-        this.intervalIds.forEach(id => window.clearInterval(id));
-        this.intervalIds.length = 0;
-    }
-
     // Public methods
     mount(): void {
         document.body.appendChild(this.container);
-        this.startSimulation();
     }
 
     unmount(): void {
-        this.stopSimulation();
         this.container.remove();
     }
     
