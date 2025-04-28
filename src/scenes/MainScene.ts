@@ -87,7 +87,7 @@ export class MainScene extends Scene {
       "[MainScene] Whoops! 'terrain' not found in the island."
     );
 
-    this._addCaveRockColliders();
+    this._addCliffColliders();
     this._addTreeColliders();
     this._addBarrelColliders();
 
@@ -128,7 +128,7 @@ export class MainScene extends Scene {
     this.world = new RAPIER.World(gravity);
     this.world.numSolverIterations = 1;
     this.world.timestep = 1 / 30; // 30 hz
- 
+
     this.on("beforeanimate", (e) => {
       this._syncPhysicsObjects(e);
     });
@@ -367,17 +367,16 @@ export class MainScene extends Scene {
 
     // Sync other physics objects
     for (const { object3D, body } of this._physicsObjects) {
-
       const pos = body.translation();
       object3D.position.set(pos.x, pos.y, pos.z);
 
       const rot = body.rotation();
       object3D.quaternion.set(rot.x, rot.y, rot.z, rot.w);
 
-      if((object3D as InstancedEntity).isInstanceEntity) {
-      (object3D as InstancedEntity).owner.worldToLocal(object3D.position);
+      if ((object3D as InstancedEntity).isInstanceEntity) {
+        (object3D as InstancedEntity).owner.worldToLocal(object3D.position);
       }
-      object3D.updateMatrix(); 
+      object3D.updateMatrix();
     }
   }
 
@@ -422,74 +421,72 @@ export class MainScene extends Scene {
       return;
     }
 
-    // const geometry = instanced[0].geometry;
-    // const material = instanced[0].material;
-    // const count = instanced.count;
-    // const barrelNewInstance = new InstancedMesh2(geometry, material, { capacity: count }); 
-
     instanced.forEach((barrelInstance) => {
       barrelInstance.instances.forEach((barrel) => {
         const worldPos = barrelInstance.localToWorld(barrel.position.clone());
-        barrel.position.copy(worldPos)
-        const worldQuat = new Quaternion();
-        barrelInstance.getWorldQuaternion(worldQuat);
-        barrel.quaternion.copy(worldQuat);
+        barrel.position.copy(worldPos);
+        // set random quaternion
         const worldScale = barrelInstance.getWorldScale(new Vector3());
         barrel.scale.copy(worldScale);
-        barrel.updateMatrix();        
+        barrel.updateMatrix();
 
         const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
           .setTranslation(worldPos.x, worldPos.y, worldPos.z)
-          .setRotation(worldQuat)
+          .setRotation(barrel.quaternion)
           .setLinearDamping(0.5) // Reduce linear damping for more movement
           .setAngularDamping(0.2) // Reduce angular damping for more rotation
           .setAdditionalMass(2.0); // Add more mass for better physics interaction
 
         const body = this.world.createRigidBody(bodyDesc);
 
+
         const geometry = barrelInstance.geometry;
         geometry.computeBoundingBox();
 
         const box = geometry.boundingBox;
 
-        if(!box) {
+        if (!box) {
           console.warn("Bounding box not found for barrel geometry.");
           return;
         }
 
-        const colliderDesc = RAPIER.ColliderDesc.cylinder((box?.max.y - box?.min.y), box?.max.x - box?.min.x)
+        const colliderDesc = RAPIER.ColliderDesc.cylinder(
+          box?.max.y - box?.min.y,
+          box?.max.x - box?.min.x
+        )
           .setTranslation(0, box?.max.y - box?.min.y, 0)
-          .setRotation(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2))
-          .setRestitution(0 ) // Less bounce for heavy object
-          .setFriction(0.7) // Good friction
-          .setDensity(1); // Much higher density to make it heavier
-
+          .setRestitution(0.1) // Slight bounce for heavy object
+          .setFriction(0.8) // Increased friction
+          .setDensity(5.0); // Much higher density to make it heavier
 
         this.world.createCollider(colliderDesc, body);
-      
+
         // // add to physics objects
         this._physicsObjects.push({
           object3D: barrel,
           body,
           collider: this.world.createCollider(colliderDesc, body),
         });
+        
+        body.sleep();
+
       });
       barrelInstance.removeFromParent();
       this.add(barrelInstance);
     });
   }
 
-  private _addCaveRockColliders() {
-    const caveRocks = this.island.querySelectorAll(
+  private _addCliffColliders() {
+    const cliffColliders = this.island.querySelectorAll(
       "[name^=Environment_Cliff_Collider]"
     ) as Mesh[];
 
-    if (!caveRocks.length) {
-      console.warn("No cave rocks found to add colliders.");
+    if (!cliffColliders.length) {
+      console.warn("No cliff found to add colliders.");
       return;
     }
 
-    caveRocks.forEach((rock) => {
+    cliffColliders.forEach((rock) => {
       const worldPos = rock.localToWorld(new Vector3());
       const worldQuat = new Quaternion();
       rock.getWorldQuaternion(worldQuat);
