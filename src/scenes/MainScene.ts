@@ -145,6 +145,7 @@ export class MainScene extends Scene {
     const waterMaterial = new WaterMaterial({
       camera: this.camera,
       renderTarget,
+      renderer: this.renderer,
     });
 
     const water = new Mesh(waterGeometry, waterMaterial);
@@ -467,7 +468,7 @@ export class MainScene extends Scene {
           body,
           collider: this.world.createCollider(colliderDesc, body),
         });
-        
+
         body.sleep();
 
       });

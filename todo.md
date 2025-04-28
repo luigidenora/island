@@ -2,17 +2,15 @@
 
 ## 🔴 Alta Priorità – Bloccanti per gameplay base
 
+- [ ] **Fix rotazione**
+  - [ ] Il personaggio si muove in maniera strana.
+
 - [X] **Fix sistema animazioni**
   - [X] Quando il giocatore clicca durante la camminata, eseguire l'attacco.
   - [X] Quando il giocatore preme Shift mentre cammina, passare alla corsa.
 
 - [x] **Collider per rocce grandi nella caverna**
   - [x] Aggiungere collider alle rocce per evitare che il personaggio le attraversi.
-
-- [ ] **Shader dell'acqua – miglioramenti visivi**
-  - [ ]  Aggiungere effetto schiuma.
-  - [ ] Aggiungere movimento dei vertici per simulare le onde.
-  - [x] Migliorare la profondità visiva dell'acqua.
 
 - [ ] **Implementazione nemico base**
   - [ ] Aggiungere un nemico base con un indicatore visivo (es. una stella).
@@ -28,18 +26,24 @@
 ---
 
 ## 🟡 Media Priorità – Miglioramento dell’esperienza
+
+- [x] **Inserire squalo nell’acqua**
+  - [ ] Aggiungere lo squalo come ostacolo o minaccia nell'ambiente acquatico.
+
+- [ ] **Shader dell'acqua – miglioramenti visivi**
+  - [x] Aggiungere effetto schiuma.
+  - [ ] Aggiungere movimento dei vertici per simulare le onde.
+  - [ ] Migliorare la profondità visiva dell'acqua.
+
 - [ ] **Effetti sonori**
   - [ ] Suono dei passi (camminata/corsa).
   - [ ] Suono dell’attacco.
   - [ ] Suoni ambientali (acqua, vento, ecc.).
   - [ ] Suono di avviso quando un nemico si aggancia al giocatore.
 
-- [ ] **Inserire squalo nell’acqua**
-  - [ ] Aggiungere lo squalo come ostacolo o minaccia nell'ambiente acquatico.
-
-- [ ] **Schermata di selezione livelli**
-  - [ ] Interfaccia semplice per scegliere tra i livelli disponibili.
-  - [ ] Eventuale transizione/animazione tra selezione e gameplay.
+- [x] **Schermata di selezione livelli**
+  - [x] Interfaccia semplice per scegliere tra i livelli disponibili.
+  - [x] Eventuale transizione/animazione tra selezione e gameplay.
 
 - [ ] **Schermata di game over**
   - [ ] Mostrare quando il giocatore muore o fallisce una missione.

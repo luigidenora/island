@@ -1,7 +1,7 @@
 import { DEBUG } from "../../config/debug";
 import fragmentShader from "./water.frag?raw";
 import vertexShader from "./water.vert?raw";
-import { Color, PerspectiveCamera, RepeatWrapping, ShaderMaterial, TextureLoader, UniformsLib, UniformsUtils, Vector2, WebGLRenderTarget } from "three";
+import { Color, PerspectiveCamera, RepeatWrapping, ShaderMaterial, TextureLoader, UniformsLib, UniformsUtils, Vector2, WebGLRenderer, WebGLRenderTarget } from "three";
 
 var waterUniforms = {
   time: {
@@ -11,13 +11,13 @@ var waterUniforms = {
     value: 0.35
   },
   smoothstepStart: {
-    value: 1
+    value: 0.0
   },
   smoothstepEnd: {
-    value: 0.7
+    value: 1.0
   },
   textureFoamSize: {
-    value: 1.0
+    value: 15.0
   },
   tDudv: {
     value: null
@@ -47,11 +47,12 @@ var waterUniforms = {
 
 
 export class WaterMaterial extends ShaderMaterial {
+  private _supportsDepthTextureExtension: boolean;
 
   private camera: PerspectiveCamera;
 
-  constructor({ camera, renderTarget }: { camera: PerspectiveCamera, renderTarget: WebGLRenderTarget }) {
-    const _supportsDepthTextureExtension = true;
+  constructor({ camera, renderTarget, renderer }: { camera: PerspectiveCamera, renderTarget: WebGLRenderTarget, renderer: WebGLRenderer }) {
+    const _supportsDepthTextureExtension = renderer.extensions.get("WEBGL_depth_texture");
     const _pixelRatio = window.devicePixelRatio;
     // TODO: move in loader ? 
     const dudvMap = new TextureLoader().load(
@@ -62,7 +63,7 @@ export class WaterMaterial extends ShaderMaterial {
 
     super({
       defines: {
-        DEPTH_PACKING: (_supportsDepthTextureExtension ?? true) === true ? 0 : 1,
+        DEPTH_PACKING: _supportsDepthTextureExtension === true ? 0 : 1,
         ORTHOGRAPHIC_CAMERA: 0
       },
       uniforms: UniformsUtils.merge([
@@ -74,7 +75,7 @@ export class WaterMaterial extends ShaderMaterial {
       fog: true,
       transparent: true
     });
-
+    this._supportsDepthTextureExtension = _supportsDepthTextureExtension;
     this.camera = camera;
     this._setupTweakpane();
 
@@ -103,28 +104,28 @@ export class WaterMaterial extends ShaderMaterial {
 
     folder?.addBinding(this.uniforms.threshold, 'value', {
       label: 'Threshold',
-      min: -2,
-      max: 2,
+      min: -1,
+      max: 1,
       step: 0.01
     });
 
     folder?.addBinding(this.uniforms.textureFoamSize, 'value', {
       label: 'textureFoamSize',
-      min: 1.0,
-      max: 5000.0,
+      min: -100,
+      max: 100,
       step: 1
     });
 
     folder?.addBinding(this.uniforms.smoothstepStart, 'value', {
       label: 'Depth Cutoff',
       min: 0,
-      max: 1,
+      max: 20,
       step: 0.01
     });
     folder?.addBinding(this.uniforms.smoothstepEnd, 'value', {
       label: 'Depth Cutoff',
       min: 0,
-      max: 1,
+      max: 20,
       step: 0.01
     });
     // color 
