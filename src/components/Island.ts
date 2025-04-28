@@ -26,7 +26,7 @@ export class Island extends Group {
 
     this.add(...gltf.scene.children);
     
-    const folder = DEBUG?.addFolder({ title: "Island" });
+    const folder = DEBUG?.addFolder({ title: "Island",expanded: false});
     folder?.addBinding(this, "scale");
     folder?.addBinding(this, "rotation");
     folder?.addBinding(this, "position");

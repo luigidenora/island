@@ -115,7 +115,7 @@ export class MainScene extends Scene {
 
   private _initializePhysicsWorld() {
     if (DEBUG) {
-      const debugFolder = DEBUG.addFolder({ title: "RAPIER debug" });
+      const debugFolder = DEBUG.addFolder({ title: "RAPIER debug" ,expanded: false});
       this.debugGeometry.frustumCulled = false;
       this.debugGeometry.interceptByRaycaster = false;
       this.debugGeometry.visible = true;
@@ -220,8 +220,9 @@ export class MainScene extends Scene {
     // Create the player character
     this.shark = new GameCharacter("Shark", spawnPoint);
     this.shark.canSwim = true;
-    this.shark.scale.copy(spawnPoint.scale);
+    // this.shark.scale;
     this.shark.position.copy(spawnPoint.position);
+    this.shark.position.y += 1;
     this.shark.quaternion.copy(spawnPoint.quaternion);
     this.shark.updateMatrix();
     this.add(this.shark);
@@ -231,8 +232,7 @@ export class MainScene extends Scene {
       this.shark,
       this.world,
       this.player,
-      100.0,
-      1.0,
+      { attackRange: 1, attackCooldown: 0.5, detectionRange: 50, damagePerHit: 3, patrolRadius: 20, patrolSpeed: 0.2 },
       SharkCharacterStateMachine
     );
   }
@@ -317,9 +317,9 @@ export class MainScene extends Scene {
       });
 
       const debugPlane = new Mesh(new PlaneGeometry(0.64, 0.36), debugMaterial);
-      debugPlane.visible = true;
+      debugPlane.visible = false;
 
-      const debugFolder = DEBUG.addFolder({ title: "Renderer Debug" });
+      const debugFolder = DEBUG.addFolder({ title: "Renderer Debug" , expanded: false});
       debugFolder?.addBinding(debugPlane, "visible");
 
       this.on("animate", () => {

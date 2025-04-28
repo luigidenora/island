@@ -43,7 +43,7 @@ export class ThirdPersonCamera {
   }
 
   private _setupTweakpane() {
-    const folder = DEBUG?.addFolder({ title: 'Camera Controls' });
+    const folder = DEBUG?.addFolder({ title: 'Camera Controls',expanded: false });
     
     // Camera offset controls
     const offsetFolder = folder?.addFolder({ title: 'Camera Offset' });

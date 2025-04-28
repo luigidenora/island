@@ -14,7 +14,7 @@ export class Main extends MainBase {
     super({ showStats: DEBUG != null });
     const camera = new PerspectiveCameraAuto(CAMERA_CONFIG.fov, CAMERA_CONFIG.near, CAMERA_CONFIG.far);
 
-    const folder = DEBUG?.addFolder({ title: 'Island' });
+    const folder = DEBUG?.addFolder({ title: 'Island' ,expanded: false});
     folder?.addBinding(camera, 'fov');
     folder?.addBinding(camera, 'near');
     folder?.addBinding(camera, 'far');

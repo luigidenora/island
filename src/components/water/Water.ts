@@ -102,7 +102,7 @@ export class WaterMaterial extends ShaderMaterial {
 
 
   private _setupTweakpane() {
-    const folder = DEBUG?.addFolder({ title: 'Water Material' });
+    const folder = DEBUG?.addFolder({ title: 'Water Material', expanded: false });
 
     folder?.addBinding(this.uniforms.threshold, 'value', {
       label: 'Threshold',
