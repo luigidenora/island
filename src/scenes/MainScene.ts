@@ -220,6 +220,10 @@ export class MainScene extends Scene {
     // Create the player character
     this.shark = new GameCharacter("Shark", spawnPoint);
     this.shark.canSwim = true;
+    this.shark.scale.copy(spawnPoint.scale);
+    this.shark.position.copy(spawnPoint.position);
+    this.shark.quaternion.copy(spawnPoint.quaternion);
+    this.shark.updateMatrix();
     this.add(this.shark);
 
     // Create the character controller with the player and physics world
@@ -276,6 +280,7 @@ export class MainScene extends Scene {
     target.samples = 4;
 
     target.depthTexture = new DepthTexture(width, height);
+    
 
     if (DEBUG) {
       const debugMaterial = new ShaderMaterial({

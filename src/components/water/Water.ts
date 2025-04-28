@@ -8,13 +8,13 @@ var waterUniforms = {
     value: 0
   },
   threshold: {
-    value: 0.35
+    value: 0.33
   },
   smoothstepStart: {
-    value: 0.0
+    value: 0.0  
   },
   smoothstepEnd: {
-    value: 1.0
+    value: 0.1
   },
   textureFoamSize: {
     value: 15.0
@@ -23,6 +23,9 @@ var waterUniforms = {
     value: null
   },
   tDepth: {
+    value: null
+  },
+  tRender: {
     value: null
   },
   cameraNear: {
@@ -86,10 +89,9 @@ export class WaterMaterial extends ShaderMaterial {
       window.innerHeight * _pixelRatio
     );
     this.uniforms.tDudv.value = dudvMap;
-    this.uniforms.tDepth.value =
-      _supportsDepthTextureExtension === true
-        ? renderTarget.depthTexture
-        : renderTarget.texture;
+    this.uniforms.tDepth.value = renderTarget.depthTexture;
+    this.uniforms.tRender.value = renderTarget.texture;
+    
   }
 
   public update(time: number) {
@@ -117,15 +119,15 @@ export class WaterMaterial extends ShaderMaterial {
     });
 
     folder?.addBinding(this.uniforms.smoothstepStart, 'value', {
-      label: 'Depth Cutoff',
+      label: 'Depth smoothstepStart',
       min: 0,
-      max: 20,
+      max: 1,
       step: 0.01
     });
     folder?.addBinding(this.uniforms.smoothstepEnd, 'value', {
-      label: 'Depth Cutoff',
+      label: 'Depth smoothstepEnd',
       min: 0,
-      max: 20,
+      max: 1,
       step: 0.01
     });
     // color 
