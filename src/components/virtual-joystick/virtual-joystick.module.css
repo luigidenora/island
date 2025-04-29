@@ -9,7 +9,7 @@
   justify-content: center;
   align-items: center;
   user-select: none;
-  background-image: url("assets/joystick/transparent-dark/joystick-container.png");
+  background-image: url("./assets/joystick/transparent-dark/joystick-container.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -19,7 +19,7 @@
 .joystick {
   width: 6em;
   height: 6em;
-  background-image: url("assets/joystick/transparent-dark/joystick.png");
+  background-image: url("./assets/joystick/transparent-dark/joystick.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -64,7 +64,7 @@
 /* === Sword Button (higher and slightly to the left) === */
 .swordButton {
   place-self: end;
-  background-image: url("assets/joystick/transparent-dark/sword.png");
+  background-image: url("./assets/joystick/transparent-dark/sword.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -73,7 +73,7 @@
 /* === Jump Button (lower and slightly to the right) === */
 .jumpButton {
   place-self: start;
-  background-image: url("assets/joystick/transparent-dark/jump.png");
+  background-image: url("./assets/joystick/transparent-dark/jump.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
