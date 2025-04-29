@@ -26,7 +26,7 @@ export class LevelSelect {
 
         // Create 4 levels (you can modify the number based on your needs)
         for (let i = 1; i <= 4; i++) {
-            const isLocked = i > 2; // Example: lock levels 3 and 4
+            const isLocked = i > 1;
             const levelBtn = new LevelButton(i, isLocked);
             
             if (!isLocked) {
