@@ -7,9 +7,9 @@ export class CharacterPhysicsController {
   public body: RAPIER.RigidBody;
   public collider: RAPIER.Collider;
   private characterController: RAPIER.KinematicCharacterController;
-  private moveSpeed: number = 10.0;
-  private runSpeed: number = 20.0;
-  private rotationSpeed: number = 8.0;
+  private moveSpeed: number = 6.0;
+  private runSpeed: number = 10.0;
+  private rotationSpeed: number = 1.0;
   private readonly GRAVITY = -9.81;
   private direction: Vector3 = new Vector3(0, 0, 1);
 
@@ -83,11 +83,7 @@ export class CharacterPhysicsController {
     desiredMove.multiplyScalar(speed * delta);
 
     // Apply gravity
-    if (this.character.canSwim && this.body.translation().y < 5) {
-      desiredMove.y = 0; // No gravity effect when swimming
-    } else {
-      desiredMove.y += this.GRAVITY * delta;
-    }
+    desiredMove.y += this.GRAVITY * delta;
 
     // Use Rapier's character controller for movement
     this.characterController.computeColliderMovement(this.collider, {
@@ -103,7 +99,6 @@ export class CharacterPhysicsController {
         let collision = this.characterController.computedCollision(i);
         // check if collision is chest
         if (collision?.collider?.isSensor()) {
-          alert("hai colpito un oggetto");
           // Handle the collision with the chest
           window.dispatchEvent(
             new CustomEvent("chestCollision", {

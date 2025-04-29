@@ -140,6 +140,21 @@ export class GameHUD {
     // Public methods
     mount(): void {
         document.body.appendChild(this.container);
+        window.addEventListener("damage", () => {
+            const damage = 1;
+            this.health = Math.max(this.health - damage, 0);
+            if (this.health <= 0) {
+                this.gameOver();
+            }
+        });
+    }
+    
+    gameOver() {
+        this.health = 0;
+        this.updateElementStyle(this.healthElement, 'health--game-over', 800);
+        this.hide();
+        // Add any additional game over logic here
+        window.dispatchEvent(new CustomEvent('game-over'));
     }
 
     unmount(): void {

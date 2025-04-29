@@ -250,8 +250,7 @@ export class MainScene extends Scene {
       this.shark,
       this.world,
       this.player,
-      100.0,
-      1.0,
+     { detectionRange: 50, attackRange: 5, attackCooldown: 3 },
       SharkCharacterStateMachine
     );
   }

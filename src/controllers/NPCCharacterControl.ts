@@ -17,7 +17,7 @@ class NPCInputHandler extends BasicCharacterInputHandler {
   constructor(
     private npc: GameCharacter,
     private player: GameCharacter,
-    private attackRange: number = 1.0,
+    private attackRange: number = 2.0,
     private attackCooldown: number = 2.0,
     private detectionRange: number = 15.0
   ) {
@@ -39,10 +39,10 @@ class NPCInputHandler extends BasicCharacterInputHandler {
     if (distanceToPlayer <= this.detectionRange) {
       // Calculate direction to player in world space
       const directionToPlayer = playerWorldPosition.clone().sub(npcWorldPosition).normalize();
-      
+
       // Get NPC's current forward direction
       const npcForward = new Vector3(0, 0, 1).applyQuaternion(this.npc.quaternion);
-      
+
       // Calculate angle between current direction and target direction
       const crossProduct = new Vector3().crossVectors(npcForward, directionToPlayer);
       const dotProduct = npcForward.dot(directionToPlayer);
@@ -51,16 +51,17 @@ class NPCInputHandler extends BasicCharacterInputHandler {
       if (DEBUG) {
         console.log(`[${this.npc.name}] Distance: ${distanceToPlayer.toFixed(2)}, AngleDiff: ${angleDiff.toFixed(2)}`);
       }
-
-      // Smooth rotation with deadzone to prevent oscillation
-      const ROTATION_DEADZONE = 0.1;
-      if (Math.abs(angleDiff) > ROTATION_DEADZONE) {
-        if (angleDiff > 0) {
-          this.keys.left = true;
-          this.keys.right = false;
-        } else {
-          this.keys.right = true;
-          this.keys.left = false;
+      if (distanceToPlayer >= this.attackRange/2) {
+        // // Smooth rotation with deadzone to prevent oscillation
+        const ROTATION_DEADZONE = 0.6;
+        if (Math.abs(angleDiff) > ROTATION_DEADZONE) {
+          if (angleDiff > 0) {
+            this.keys.left = true;
+            this.keys.right = false;
+          } else {
+            this.keys.right = true;
+            this.keys.left = false;
+          }
         }
       }
 
@@ -77,6 +78,7 @@ class NPCInputHandler extends BasicCharacterInputHandler {
           this.keys.sword = true;
           this.lastAttackTime = currentTime;
           if (DEBUG) console.log(`[${this.npc.name}] Attacking!`);
+          window.dispatchEvent(new CustomEvent("damage", { detail: { attacker: this.npc.name, target: this.player } }));
         }
       }
     }
@@ -93,16 +95,21 @@ export class NPCCharacterControl extends BasicCharacterController {
   protected input: NPCInputHandler;
 
   constructor(
-    character: GameCharacter, 
-    world: RAPIER.World, 
+    character: GameCharacter,
+    world: RAPIER.World,
     player: GameCharacter,
-    private attackRange: number = 10.0,
-    private attackCooldown: number = 2.0,
+   private options: {
+      attackRange?: number;
+      attackCooldown?: number;
+      detectionRange?: number;
+    } = {},
     stateMachineClass = HumanoidCharacterStateMachine
   ) {
     super(character, world, stateMachineClass);
-    
-    this.input = new NPCInputHandler(character, player, attackRange);
+
+    const { attackRange = 2.0, attackCooldown = 2.0, detectionRange = 15.0 } = options;
+
+    this.input = new NPCInputHandler(character, player, attackRange, attackCooldown, detectionRange);
 
     if (DEBUG) {
       this._createDebugVisuals();
@@ -110,8 +117,8 @@ export class NPCCharacterControl extends BasicCharacterController {
   }
 
   override update(delta: number): void {
-    if(this.character.name !== "Shark") {
-    this.checkCharacterFall();
+    if (this.character.name !== "Shark") {
+      this.checkCharacterFall();
     }
 
     (this.input as NPCInputHandler).update(delta);
@@ -124,7 +131,7 @@ export class NPCCharacterControl extends BasicCharacterController {
 
   private _createDebugVisuals(): void {
     // Attack range circle
-    const geometry = new CircleGeometry(this.attackRange, 32);
+    const geometry = new CircleGeometry(this.options.attackRange, 32);
     const material = new MeshBasicMaterial({ color: 0xff0000, wireframe: true });
     this.debugMesh = new Mesh(geometry, material);
     this.debugMesh.rotation.x = -Math.PI / 2;
@@ -141,7 +148,7 @@ export class NPCCharacterControl extends BasicCharacterController {
     const patrolRadius = 3.0;
     const segments = 32;
     const startPosition = this.character.position.clone();
-    
+
     for (let i = 0; i <= segments; i++) {
       const angle = (i / segments) * Math.PI * 2;
       patrolPoints.push(new Vector3(
