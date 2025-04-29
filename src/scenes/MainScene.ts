@@ -245,6 +245,7 @@ export class MainScene extends Scene {
 
     // Create the player character
     this.player = new GameCharacter("Captain_Barbarossa", spawnPoint);
+    this.player.isPlayer = true;
     this.add(this.player);
 
     // Create the character controller with the player and physics world

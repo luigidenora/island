@@ -1,5 +1,7 @@
 import classes from "./virtual-joystick.module.css";
-export const isMobile = () => true
+export const isMobile = () => {
+  return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone|webOS/i.test(navigator.userAgent);
+};
 /**
  * A virtual joystick for touch devices that provides normalized directional input.
  * This implementation is more robust and handles edge cases better.

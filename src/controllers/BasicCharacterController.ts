@@ -46,14 +46,16 @@ export class BasicCharacterController {
     this.initialPosition = character.position.clone();
 
     // Initialize all components
-
-    const touchJoystick = new VirtualJoystick();
-
-    if (touchJoystick.isVisible) {
-      this.input = new CharacterInputTouchHandler(touchJoystick);
-    } else {
-      this.input = new CharacterKeybordInputHandler();
+    if(this.character.isPlayer){
+      const touchJoystick = new VirtualJoystick();
+      
+      if (touchJoystick.isVisible) {
+        this.input = new CharacterInputTouchHandler(touchJoystick);
+      } else {
+        this.input = new CharacterKeybordInputHandler();
+      }
     }
+
     this.animator = new CharacterAnimator(character);
     this.physics = new CharacterPhysicsController(world, character);
     this.stateMachine = new stateMachineClass(this.animator);

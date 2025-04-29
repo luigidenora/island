@@ -53,6 +53,11 @@ export class GameCharacter extends Group {
    * @default false
    */
   public canSwim: boolean = false; // Default swimming capability
+  /**
+   * The ability to jump
+   * @default false
+   */
+  public isPlayer: boolean = false; // Default to non-player character
 
   /**
    * Creates a new character instance.

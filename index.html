@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,13 @@
         body {
             margin: 0;
             overflow: hidden;
+            touch-action: manipulation;
         }
+
+        button {
+            touch-action: manipulation;
+        }
+
         canvas {
             width: 100vw;
             height: 100vh;
@@ -17,6 +24,7 @@
     </style>
     <link rel="stylesheet" href="/src/ui/styles/progress-bar.css">
 </head>
+
 <body>
     <div id="progress-container" class="progress-container">
         <div class="progress-icon">🏴‍☠️</div>
@@ -28,4 +36,5 @@
     </div>
     <script type="module" src="/src/index.ts"></script>
 </body>
-</html> 
+
+</html>
