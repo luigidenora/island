@@ -1,6 +1,6 @@
 import { GameCharacter } from "../components/Characters";
 import RAPIER from "@dimforge/rapier3d";
-import { CircleGeometry, LineBasicMaterial, BufferGeometry, Line, Vector3, Mesh, MeshBasicMaterial } from "three";
+import { CircleGeometry, LineBasicMaterial, BufferGeometry, Line, Vector3, Mesh, MeshBasicMaterial, Quaternion, Material } from "three";
 import { HumanoidCharacterStateMachine } from "./CharacterStateMachine";
 import { BasicCharacterController } from "./BasicCharacterController";
 import { BasicCharacterInputHandler } from "./CharacterInput";
@@ -10,21 +10,76 @@ import { DEBUG } from "../config/debug";
  * AI-driven input handler for NPCs that implements chase and attack behavior
  */
 class NPCInputHandler extends BasicCharacterInputHandler {
+  private lastAttackTime: number = 0;
+  private readonly MOVEMENT_THRESHOLD = Math.PI / 3; // Increased from PI/4 to PI/3 for wider movement window
+  private readonly ROTATION_THRESHOLD = 0.1;
+
   constructor(
     private npc: GameCharacter,
     private player: GameCharacter,
     private attackRange: number = 1.0,
-    private attackCooldown: number = 2.0
+    private attackCooldown: number = 2.0,
+    private detectionRange: number = 15.0
   ) {
     super();
   }
 
-  update(delta: number) {
+  update(_delta: number) {
     // Reset all inputs
     Object.keys(this.keys).forEach(key => {
       this.keys[key as keyof typeof this.keys] = false;
     });
-    // Non facciamo nulla - l'NPC resta fermo
+
+    // Calculate distance to player using world positions
+    const npcWorldPosition = this.npc.getWorldPosition(new Vector3());
+    const playerWorldPosition = this.player.getWorldPosition(new Vector3());
+    const distanceToPlayer = npcWorldPosition.distanceTo(playerWorldPosition);
+
+    // If player is within detection range
+    if (distanceToPlayer <= this.detectionRange) {
+      // Calculate direction to player in world space
+      const directionToPlayer = playerWorldPosition.clone().sub(npcWorldPosition).normalize();
+      
+      // Get NPC's current forward direction
+      const npcForward = new Vector3(0, 0, 1).applyQuaternion(this.npc.quaternion);
+      
+      // Calculate angle between current direction and target direction
+      const crossProduct = new Vector3().crossVectors(npcForward, directionToPlayer);
+      const dotProduct = npcForward.dot(directionToPlayer);
+      const angleDiff = Math.atan2(crossProduct.y, dotProduct);
+
+      if (DEBUG) {
+        console.log(`[${this.npc.name}] Distance: ${distanceToPlayer.toFixed(2)}, AngleDiff: ${angleDiff.toFixed(2)}`);
+      }
+
+      // Smooth rotation with deadzone to prevent oscillation
+      const ROTATION_DEADZONE = 0.1;
+      if (Math.abs(angleDiff) > ROTATION_DEADZONE) {
+        if (angleDiff > 0) {
+          this.keys.left = true;
+          this.keys.right = false;
+        } else {
+          this.keys.right = true;
+          this.keys.left = false;
+        }
+      }
+
+      // Move forward only when roughly facing the target
+      const FORWARD_ANGLE_THRESHOLD = Math.PI / 4; // 45 degrees
+      if (Math.abs(angleDiff) < FORWARD_ANGLE_THRESHOLD) {
+        this.keys.forward = true;
+      }
+
+      // Attack logic
+      if (distanceToPlayer <= this.attackRange) {
+        const currentTime = performance.now() / 1000;
+        if (currentTime - this.lastAttackTime >= this.attackCooldown) {
+          this.keys.sword = true;
+          this.lastAttackTime = currentTime;
+          if (DEBUG) console.log(`[${this.npc.name}] Attacking!`);
+        }
+      }
+    }
   }
 }
 
@@ -47,7 +102,7 @@ export class NPCCharacterControl extends BasicCharacterController {
   ) {
     super(character, world, stateMachineClass);
     
-    this.input = new NPCInputHandler(character, player, attackRange, attackCooldown);
+    this.input = new NPCInputHandler(character, player, attackRange);
 
     if (DEBUG) {
       this._createDebugVisuals();
@@ -119,7 +174,11 @@ export class NPCCharacterControl extends BasicCharacterController {
   dispose(): void {
     if (this.debugMesh) {
       this.debugMesh.geometry.dispose();
-      this.debugMesh.material.dispose();
+      if (this.debugMesh.material instanceof Material) {
+        this.debugMesh.material.dispose();
+      } else if (Array.isArray(this.debugMesh.material)) {
+        this.debugMesh.material.forEach(m => m.dispose());
+      }
       this.character.remove(this.debugMesh);
     }
 

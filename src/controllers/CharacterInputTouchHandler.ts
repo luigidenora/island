@@ -40,14 +40,14 @@ export class CharacterInputTouchHandler extends BasicCharacterInputHandler {
     this.keys.left = x < -0.5;
     this.keys.right = x > 0.5;
 
-    // Check if running forward for more than 5 seconds
-    if (this.keys.forward) {
-      setTimeout(() => {
-        if (this.keys.forward) {
-          this.keys.run = true;
-        }
-      }, 5000);
-    }
+    // // Check if running forward for more than 5 seconds
+    // if (this.keys.forward) {
+    //   setTimeout(() => {
+    //     if (this.keys.forward) {
+    //       this.keys.run = true;
+    //     }
+    //   }, 5000);
+    // }
   }
 
   private _onJoystickStop(): void {

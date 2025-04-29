@@ -185,7 +185,7 @@ export class MainScene extends Scene {
   private _createEnemies() {
     const spawnPoint = this.island.querySelectorAll("[name^=@Enemy_Spawn]");
 
-    for (const enemy of spawnPoint) {
+    for (const enemy of spawnPoint) { // only one enemy for now
       // Create the character
       const randomEnemy =
         this.availableEnemies[
