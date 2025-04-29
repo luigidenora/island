@@ -28,5 +28,32 @@ import("@dimforge/rapier3d").then((rapier3d) => {
   // Mount level selector UI
   const levelSelect = new LevelSelect(thirdPersonCamera);
   levelSelect.mount();
+
+  // on chestCollision game end 
+  window.addEventListener("chestCollision", () => {
+    // show modal with win message 
+    const modal = document.createElement("div");
+    modal.className = "win-modal";
+
+    const title = document.createElement("h1");
+    title.textContent = "You Win!";
+    title.className = "win-modal__title";
+
+    const message = document.createElement("p");
+    message.textContent = "Congratulations!";
+    message.className = "win-modal__message";
+
+    const closeButton = document.createElement("button");
+    closeButton.textContent = "Close";
+    closeButton.className = "win-modal__button";
+    closeButton.addEventListener("click", () => {
+      window.location.reload();
+    });
+
+    modal.appendChild(title);
+    modal.appendChild(message);
+    modal.appendChild(closeButton);
+    document.body.appendChild(modal);
+  });
 });
 

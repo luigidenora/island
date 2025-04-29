@@ -67,7 +67,8 @@ export class GameCharacter extends Group {
    */
   constructor(
     name: CharacterName,
-    { position, rotation, scale }: { position: Vector3; rotation: Euler , scale?: Vector3}
+    { position, rotation }: { position: Vector3; rotation: Euler },
+    scale?: number
   ) {
     super();
     this.name = name;
@@ -77,19 +78,15 @@ export class GameCharacter extends Group {
     const model = clone(gltf.scene).children[0];
     this.add(model);
 
-    // Calcola le dimensioni del modello usando una bounding box
-    const bbox = new Box3().setFromObject(model);
-    const size = new Vector3();
-    bbox.getSize(size);
-    this.height = size.y;
-    this.radius = Math.max(size.x, size.z) / 2;
-    
-    console.log(`Dimensioni del personaggio ${this.name}:`, {
-      altezza: this.height,
-      raggio: this.radius,
-      larghezza: size.x,
-      profondità: size.z
-    });
+    if (scale) {
+      this.scale.setScalar(scale);
+    } else {
+      // Calcola le dimensioni del modello usando una bounding box
+      const bbox = new Box3().setFromObject(model);
+      const size = new Vector3();
+      bbox.getSize(size);
+      this.scale.setScalar(size.y);
+    }
 
     // Store animations from the loaded model
     this.animations = gltf.animations;
@@ -97,9 +94,6 @@ export class GameCharacter extends Group {
     // Set initial transform
     this.position.copy(position);
     this.rotation.copy(rotation);
-    if (scale) {
-        this.scale.copy(scale);
-    }
     this.initialPosition = position.clone();
   }
 }

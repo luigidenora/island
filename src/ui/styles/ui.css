@@ -335,6 +335,73 @@
     box-shadow: var(--button-shadow-active);
 }
 
+/* Win Modal Styles */
+.win-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--background-color);
+    width: clamp(300px, 50%, 600px); /* Responsive width */
+    padding: 40px; /* Increased padding for larger modal */
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 0 var(--shadow-color);
+    text-align: center;
+    font-family: var(--font-primary);
+    font-size: 1.2rem; /* Slightly larger font size for better readability */
+    color: var(--text-color);
+    z-index: 1000;
+    animation: bounceIn 0.6s var(--transition-bounce);
+}
+
+.win-modal__title {
+    font-size: clamp(2.5rem, 5vw, 4rem); /* Responsive title size */
+    font-weight: 800;
+    color: var(--primary-color);
+    text-shadow: 4px 4px 0 var(--shadow-color);
+    margin-bottom: 10px;
+    transform: rotate(-2deg);
+}
+
+.win-modal__message {
+    font-size: clamp(1.2rem, 3vw, 2rem); /* Responsive message size */
+    margin-bottom: 20px;
+    color: var(--text-color);
+}
+
+.win-modal__button {
+    font-size: clamp(1rem, 2vw, 1.5rem); /* Responsive button size */
+    padding: 12px 24px; /* Increased padding for better usability */
+    border: none;
+    border-radius: var(--border-radius);
+    background-color: var(--primary-color);
+    color: var(--text-color);
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: var(--button-shadow);
+    transition: transform 0.3s var(--transition-bounce);
+}
+
+.win-modal__button:hover {
+    transform: translateY(-4px);
+}
+
+.win-modal__button:active {
+    transform: translateY(4px);
+    box-shadow: var(--button-shadow-active);
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0.5) translate(-50%, -50%);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1) translate(-50%, -50%);
+        opacity: 1;
+    }
+}
+
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
     .score__digit-inner,
@@ -362,4 +429,4 @@
     will-change: transform;
     backface-visibility: hidden;
     perspective: 1000px;
-} 
+}
