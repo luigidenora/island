@@ -1,6 +1,5 @@
 import classes from "./virtual-joystick.module.css";
-export const isMobile = (): boolean =>
-  window.matchMedia("(pointer: coarse)").matches;
+export const isMobile = () => true
 /**
  * A virtual joystick for touch devices that provides normalized directional input.
  * This implementation is more robust and handles edge cases better.
