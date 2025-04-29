@@ -46,9 +46,9 @@ export class BasicCharacterController {
     this.initialPosition = character.position.clone();
 
     // Initialize all components
-    if(this.character.isPlayer){
+    if (this.character.isPlayer) {
       const touchJoystick = new VirtualJoystick();
-      
+
       if (touchJoystick.isVisible) {
         this.input = new CharacterInputTouchHandler(touchJoystick);
       } else {
@@ -102,6 +102,11 @@ export class BasicCharacterController {
    */
   get rotation() {
     return this.animator.rotation;
+  }
+
+
+  get collider() {
+    return this.physics.collider;
   }
 
   protected _respawnAtInitialPosition(): void {

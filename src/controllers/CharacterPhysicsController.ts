@@ -5,7 +5,7 @@ import { BasicCharacterInputHandler } from "./CharacterInput";
 
 export class CharacterPhysicsController {
   public body: RAPIER.RigidBody;
-  private collider: RAPIER.Collider;
+  public collider: RAPIER.Collider;
   private characterController: RAPIER.KinematicCharacterController;
   private moveSpeed: number = 10.0;
   private runSpeed: number = 20.0;
@@ -95,6 +95,29 @@ export class CharacterPhysicsController {
       y: desiredMove.y,
       z: desiredMove.z,
     });
+  
+    if (this.character.isPlayer) {
+      // After the collider movement calculation is done, we can read the
+      // collision events.
+      for (let i = 0; i < this.characterController.numComputedCollisions(); i++) {
+        let collision = this.characterController.computedCollision(i);
+        // check if collision is chest
+        if (collision?.collider?.isSensor()) {
+          alert("hai colpito un oggetto");
+          // Handle the collision with the chest
+          window.dispatchEvent(
+            new CustomEvent("chestCollision", {
+              detail: {
+                collider: collision.collider,
+                character: this.character,
+              },
+            })
+          );
+        }
+      }
+    }
+
+
 
     const correctedMovement = this.characterController.computedMovement();
 

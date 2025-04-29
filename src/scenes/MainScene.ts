@@ -1,4 +1,4 @@
-import { type Collider, type RigidBody, type World } from "@dimforge/rapier3d";
+import RAPIER, { type Collider, type RigidBody, type World } from "@dimforge/rapier3d";
 import { InstancedEntity, InstancedMesh2 } from "@three.ez/instanced-mesh";
 import { AnimateEvent, PerspectiveCameraAuto } from "@three.ez/main";
 import {
@@ -62,6 +62,7 @@ export class MainScene extends Scene {
     "Sharky",
     "Mako",
   ];
+  eventQueue: RAPIER.EventQueue;
 
   constructor(
     private camera: PerspectiveCameraAuto,
@@ -75,6 +76,24 @@ export class MainScene extends Scene {
     this._createPlayer();
     this._createEnemies();
     this._createShark();
+    this._createChest();
+  }
+  private _createChest() {
+    const spawnPoint = this.island.querySelector("[name=Prop_Chest_Gold001]");
+    console.assert(!!spawnPoint, "Chest spawn point not found");
+
+    // add Rapier collider on chest if we touch end game 
+    const chestColliderDesc = RAPIER.ColliderDesc.cuboid(2, 2, 2).setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS).setSensor(true).setTranslation(spawnPoint.position.x, spawnPoint.position.y, spawnPoint.position.z)
+      .setRotation(spawnPoint.quaternion);
+    const chestBodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
+
+    const chestBody = this.world.createRigidBody(chestBodyDesc);
+    const chestCollider = this.world.createCollider(chestColliderDesc, chestBody);
+    this.world.contactPair(chestCollider, this.playerCharacterController.collider, (manifold, flipped) => {
+      if (manifold.numContacts() > 0) {
+        alert("You found the treasure!");
+      }
+    });
   }
 
   private _islandSurface() {
@@ -128,9 +147,9 @@ export class MainScene extends Scene {
     this.world = new RAPIER.World(gravity);
     this.world.numSolverIterations = 1;
     this.world.timestep = 1 / 30; // 30 hz
-
+    this.eventQueue = new RAPIER.EventQueue(true);
     this.on("beforeanimate", (e) => {
-      this._syncPhysicsObjects(e);
+      this._syncPhysicsObjects(e, this.eventQueue);
     });
   }
 
@@ -185,14 +204,14 @@ export class MainScene extends Scene {
   private _createEnemies() {
     const spawnPoint = this.island.querySelectorAll("[name^=@Enemy_Spawn]");
 
-    for (const enemy of spawnPoint) {
+    for (const enemy of spawnPoint) { // only one enemy for now
       // Create the character
       const randomEnemy =
         this.availableEnemies[
-          Math.floor(Math.random() * this.availableEnemies.length)
+        Math.floor(Math.random() * this.availableEnemies.length)
         ];
       // Lift the enemy position by 1 unit
-      enemy.position.y += 1;
+      enemy.position.y += 2;
 
       const enemyCharacter = new GameCharacter(randomEnemy, enemy);
       enemy.parent?.add(enemyCharacter);
@@ -244,7 +263,7 @@ export class MainScene extends Scene {
     this.island.remove(spawnPoint);
 
     // Create the player character
-    this.player = new GameCharacter("Captain_Barbarossa", spawnPoint);
+    this.player = new GameCharacter("Captain_Barbarossa", spawnPoint, 0.8);
     this.player.isPlayer = true;
     this.add(this.player);
 
@@ -253,6 +272,8 @@ export class MainScene extends Scene {
       this.player,
       this.world
     );
+    this.playerCharacterController.collider.setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);
+    
   }
 
   private _setupLighting() {
@@ -281,7 +302,7 @@ export class MainScene extends Scene {
     target.samples = 4;
 
     target.depthTexture = new DepthTexture(width, height);
-    
+
 
     if (DEBUG) {
       const debugMaterial = new ShaderMaterial({
@@ -342,10 +363,10 @@ export class MainScene extends Scene {
     return target;
   }
 
-  private _syncPhysicsObjects(e: AnimateEvent) {
+  private _syncPhysicsObjects(e: AnimateEvent, eventQueue: RAPIER.EventQueue) {
     if (!this.world) return;
 
-    this.world.step();
+    this.world.step(eventQueue);
 
     if (DEBUG) {
       const { vertices, colors } = this.world.debugRender();

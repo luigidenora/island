@@ -1,5 +1,5 @@
 import { Asset } from "@three.ez/main";
-import { AnimationClip, Euler, Group, Vector3 } from "three";
+import { AnimationClip, Box3, Euler, Group, Vector3 } from "three";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 
@@ -67,7 +67,8 @@ export class GameCharacter extends Group {
    */
   constructor(
     name: CharacterName,
-    { position, rotation }: { position: Vector3; rotation: Euler }
+    { position, rotation }: { position: Vector3; rotation: Euler },
+    scale?: number
   ) {
     super();
     this.name = name;
@@ -76,6 +77,16 @@ export class GameCharacter extends Group {
     const gltf = Asset.get<GLTF>(`glTF/Characters_${this.name}.gltf`);
     const model = clone(gltf.scene).children[0];
     this.add(model);
+
+    if (scale) {
+      this.scale.setScalar(scale);
+    } else {
+      // Calcola le dimensioni del modello usando una bounding box
+      const bbox = new Box3().setFromObject(model);
+      const size = new Vector3();
+      bbox.getSize(size);
+      this.scale.setScalar(size.y);
+    }
 
     // Store animations from the loaded model
     this.animations = gltf.animations;
