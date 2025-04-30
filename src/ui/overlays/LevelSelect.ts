@@ -37,6 +37,29 @@ export class LevelSelect {
         }
 
         this.container.appendChild(grid);
+
+        // Aggiungo il testo informativo
+        const instructionText = document.createElement('p');
+        instructionText.textContent = 'To win, find and touch the treasure!';
+        instructionText.className = 'level-instructions';
+        this.container.appendChild(instructionText);
+
+        // Aggiungo stile CSS inline per il testo
+        const style = document.createElement('style');
+        style.textContent = `
+            .level-instructions {
+                color: #FFD700;
+                font-size: 1.2em;
+                text-align: center;
+                margin-top: 20px;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                font-weight: bold;
+                padding: 10px;
+                background-color: rgba(0, 0, 0, 0.6);
+                border-radius: 8px;
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     private startLevel(levelNumber: number) {
@@ -66,4 +89,4 @@ export class LevelSelect {
     show() {
         this.container.style.display = 'flex';
     }
-} 
+}

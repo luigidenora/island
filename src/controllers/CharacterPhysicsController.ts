@@ -108,6 +108,7 @@ export class CharacterPhysicsController {
               },
             })
           );
+
         }
       }
     }

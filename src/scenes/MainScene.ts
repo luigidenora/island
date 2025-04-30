@@ -89,11 +89,7 @@ export class MainScene extends Scene {
 
     const chestBody = this.world.createRigidBody(chestBodyDesc);
     const chestCollider = this.world.createCollider(chestColliderDesc, chestBody);
-    this.world.contactPair(chestCollider, this.playerCharacterController.collider, (manifold, flipped) => {
-      if (manifold.numContacts() > 0) {
-        alert("You found the treasure!");
-      }
-    });
+   
   }
 
   private _islandSurface() {

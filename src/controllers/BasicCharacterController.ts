@@ -58,15 +58,18 @@ export class BasicCharacterController {
       window.addEventListener("game-over", () => {
         if (isDead) return;
         isDead = true;
-        this.input.keys = {
-          forward: false,
-          backward: false,
-          left: false,
-          right: false,
-          jump: false,
-        };
         this.stateMachine.setState("Death");
+        setTimeout(() => {
+          this.input = undefined; // force game over
+        }, 500);
+
         window.removeEventListener("game-over", () => {});
+      })
+      window.addEventListener("damage", (event) => {  
+          this.stateMachine.setState("HitReact");
+          setTimeout(() => {
+            this.stateMachine.setState("Idle");
+          }, 1000);
       })
 
     }

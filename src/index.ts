@@ -64,6 +64,7 @@ let chestCollision = false
   window.addEventListener("chestCollision", () => {
     if(chestCollision) return
     chestCollision = true
+    gameOver = true
     // show modal with win message 
     const modal = document.createElement("div");
     modal.className = "win-modal";
