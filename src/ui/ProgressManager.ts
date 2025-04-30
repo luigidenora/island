@@ -1,11 +1,9 @@
 export class ProgressManager {
     private progressBar: HTMLElement | null;
-    private progressText: HTMLElement | null;
     private progressContainer: HTMLElement | null;
 
     constructor() {
         this.progressBar = document.getElementById('progress-bar');
-        this.progressText = document.getElementById('progress-text');
         this.progressContainer = document.getElementById('progress-container');
     }
 
@@ -13,9 +11,6 @@ export class ProgressManager {
     public updateProgress(percent: number): void {
         if (this.progressBar) {
             this.progressBar.style.width = `${percent * 100}%`;
-        }
-        if (this.progressText) {
-            this.progressText.textContent = `${percent * 100}%`;
         }
     }
 

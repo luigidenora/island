@@ -396,6 +396,7 @@ export class SwordState extends CharacterState {
       curAction.setLoop(LoopOnce, 1);
       curAction.clampWhenFinished = true;
       curAction.crossFadeFrom(prevAction, 0.5, true);
+      curAction.setEffectiveTimeScale(1.5);
       curAction.play();
     } else {
       curAction.play();

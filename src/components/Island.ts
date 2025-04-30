@@ -4,19 +4,17 @@ import { GLTF, GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DEBUG } from "../config/debug";
 import { parseToInstancedMesh2 } from "./InstancedMesh2Helper";
 
-Asset.preload(GLTFLoader, "assets/models/island-test-30.glb"); // Preload the island model when import this component
-// Asset.preload(GLTFLoader, "assets/models/island.glb"); // Preload the island model when import this component
+Asset.preload(GLTFLoader, "assets/models/island.glb"); // Preload the island model when import this component
 
 export class Island extends Group {
   /**
    * Disable the island from being intercepted by the raycaster (so many objects are children of the island)
    */
   public interceptByRaycaster = false;
-  
+
   constructor() {
     super();
-    // const gltf = Asset.get<GLTF>("assets/models/island.glb");
-    const gltf = Asset.get<GLTF>("assets/models/island-test-30.glb");
+    const gltf = Asset.get<GLTF>("assets/models/island.glb");
 
     this.convertInstancedMeshes2(gltf);
 
@@ -27,19 +25,18 @@ export class Island extends Group {
     );
 
     this.add(...gltf.scene.children);
-    
+
     const folder = DEBUG?.addFolder({ title: "Island" });
     folder?.addBinding(this, "scale");
     folder?.addBinding(this, "rotation");
     folder?.addBinding(this, "position");
-
   }
 
   /** convert all instanced meshes to instancedMesh2 */
   private convertInstancedMeshes2(gltf: GLTF) {
     for (const instancedMesh of gltf.scene.querySelectorAll("[isInstancedMesh=true]")) {
       const parent = instancedMesh.parent;
-      const instancedMesh2 = parseToInstancedMesh2(instancedMesh as InstancedMesh, { createEntities:true});
+      const instancedMesh2 = parseToInstancedMesh2(instancedMesh as InstancedMesh, { createEntities: true });
       instancedMesh.removeFromParent();
       parent?.add(instancedMesh2);
     }

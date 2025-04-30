@@ -1,8 +1,4 @@
-import RAPIER, {
-  type Collider,
-  type RigidBody,
-  type World,
-} from "@dimforge/rapier3d";
+import RAPIER, { type Collider, type RigidBody, type World } from "@dimforge/rapier3d";
 import { InstancedEntity, InstancedMesh2 } from "@three.ez/instanced-mesh";
 import { AnimateEvent, Asset, PerspectiveCameraAuto } from "@three.ez/main";
 import {
@@ -38,10 +34,11 @@ import { DEBUG } from "../config/debug";
 import { BasicCharacterController } from "../controllers/BasicCharacterController";
 import { SharkCharacterStateMachine } from "../controllers/CharacterStateMachine";
 import { NPCCharacterControl } from "../controllers/NPCCharacterControl";
-// import { EXRLoader } from "three/examples/jsm/Addons.js";
+import { initLOD } from "../components/InstancedMesh2Helper";
+import { createSimplifiedGeometry } from "../components/meshSimplifier";
+import { EXRLoader } from "three/examples/jsm/Addons.js";
 
-// Asset.preload(EXRLoader, "assets/puresky.exr");
-
+Asset.preload(EXRLoader, "assets/puresky.exr");
 export class MainScene extends Scene {
   private island!: Island;
   public player!: GameCharacter;
@@ -86,23 +83,40 @@ export class MainScene extends Scene {
     this._createEnemies();
     this._createShark();
     this._createChest();
-  }
 
+    for (const mesh of this.scene.querySelectorAll('[isInstancedMesh2=true]')) {
+      initLOD(mesh as InstancedMesh2);
+    }
+
+    for (const mesh of this.querySelectorAll('SkinnedMesh')) {
+      createSimplifiedGeometry((mesh as Mesh).geometry, { ratio: 0.3, error: 1, lockBorder: true }).then((geo) => {
+        (mesh as Mesh).geometry = geo;
+      });
+    }
+
+    for (const mesh of this.querySelectorAll('Mesh')) {
+      if (mesh.name === 'terrain' || mesh.name === '' || mesh.name === 'Molo') continue;
+
+      if (mesh.name.includes('Cliff')) {
+        createSimplifiedGeometry((mesh as Mesh).geometry, { ratio: 0.05, error: 1, lockBorder: true }).then((geo) => {
+          (mesh as Mesh).geometry = geo;
+        });
+        continue;
+      }
+
+      createSimplifiedGeometry((mesh as Mesh).geometry, { ratio: 0.3, error: 1, lockBorder: true }).then((geo) => {
+        (mesh as Mesh).geometry = geo;
+      });
+    }
+  }
   private _createChest() {
     const spawnPoint = this.island.querySelector("[name=Prop_Chest_Gold001]");
     console.assert(!!spawnPoint, "Chest spawn point not found");
 
-    // add Rapier collider on chest if we touch end game
-    const chestColliderDesc = RAPIER.ColliderDesc.cuboid(2, 2, 2)
-      .setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS)
-      .setSensor(true)
-      .setTranslation(
-        spawnPoint.position.x,
-        spawnPoint.position.y,
-        spawnPoint.position.z
-      )
+    // add Rapier collider on chest if we touch end game 
+    const chestColliderDesc = RAPIER.ColliderDesc.cuboid(2, 2, 2).setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS).setSensor(true).setTranslation(spawnPoint.position.x, spawnPoint.position.y, spawnPoint.position.z)
       .setRotation(spawnPoint.quaternion);
-    const chestBodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased();
+    const chestBodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
 
     const chestBody = this.world.createRigidBody(chestBodyDesc);
     this.world.createCollider(chestColliderDesc, chestBody);
@@ -216,12 +230,11 @@ export class MainScene extends Scene {
   private _createEnemies() {
     const spawnPoint = this.island.querySelectorAll("[name^=@Enemy_Spawn]");
 
-    for (const enemy of spawnPoint) {
-      // only one enemy for now
+    for (const enemy of spawnPoint) { // only one enemy for now
       // Create the character
       const randomEnemy =
         this.availableEnemies[
-          Math.floor(Math.random() * this.availableEnemies.length)
+        Math.floor(Math.random() * this.availableEnemies.length)
         ];
       // Lift the enemy position by 1 unit
       enemy.position.y += 2;
@@ -284,17 +297,14 @@ export class MainScene extends Scene {
       this.player,
       this.world
     );
-    this.playerCharacterController.collider.setActiveEvents(
-      RAPIER.ActiveEvents.COLLISION_EVENTS
-    );
+    this.playerCharacterController.collider.setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);
+
   }
 
   private _setupLighting() {
-    // TODO: Add a skybox
-   // this.initializeEnvironmentMap();
+   this.initializeEnvironmentMap();
 
-    this.background = new Color().setHSL(0.6, 0, 1);
-    this.fog = new Fog(this.background, 1, 5000);
+    this.fog = new Fog(new Color().setHSL(0.6, 0, 1), 1, 5000);
 
     const hemiLight = new HemisphereLight(0x0000ff, 0x00ff00, 0.6);
     hemiLight.color.setHSL(0.6, 1, 0.6);
@@ -318,6 +328,7 @@ export class MainScene extends Scene {
 
     const envMap = pmremGenerator.fromEquirectangular(texture).texture;
 
+    debugger
     // this.environment = envMap;
     this.background = envMap;
 
@@ -501,6 +512,7 @@ export class MainScene extends Scene {
 
         const body = this.world.createRigidBody(bodyDesc);
 
+
         const geometry = barrelInstance.geometry;
         geometry.computeBoundingBox();
 
@@ -530,6 +542,7 @@ export class MainScene extends Scene {
         });
 
         body.sleep();
+
       });
       barrelInstance.removeFromParent();
       this.add(barrelInstance);

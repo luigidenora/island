@@ -17,15 +17,15 @@ export class LevelSelect {
 
     private init() {
         const title = document.createElement('h1');
-        title.textContent = 'SELECT LEVEL';
+        title.textContent = 'Hello, Adventurer!';
         title.className = 'level-select-title';
         this.container.appendChild(title);
 
         const grid = document.createElement('div');
         grid.className = 'level-grid';
 
-        // Create 4 levels (you can modify the number based on your needs)
-        for (let i = 1; i <= 4; i++) {
+        // // Create 4 levels (you can modify the number based on your needs)
+        for (let i = 1; i <= 1; i++) {
             const isLocked = i > 1;
             const levelBtn = new LevelButton(i, isLocked);
             

@@ -9,7 +9,7 @@ export class CharacterPhysicsController {
   private characterController: RAPIER.KinematicCharacterController;
   private moveSpeed: number = 6.0;
   private runSpeed: number = 10.0;
-  private rotationSpeed: number = 1.0;
+  private rotationSpeed: number = 5.0;
   private readonly GRAVITY = -9.81;
   private direction: Vector3 = new Vector3(0, 0, 1);
 

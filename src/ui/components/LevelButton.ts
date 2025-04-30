@@ -7,7 +7,7 @@ export class LevelButton {
         this.element.className = `level-button ${isLocked ? 'locked' : ''}`;
         
         const content = `
-            <div class="level-number">${level}</div>
+            <div class="level-number">start</div>
             ${isLocked ? '<div class="lock-icon">🔒</div>' : ''}
         `;
         

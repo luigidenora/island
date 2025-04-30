@@ -44,7 +44,6 @@
 
 .level-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
     gap: 2.5rem;
     padding: 2rem;
     transform: rotate(2deg);

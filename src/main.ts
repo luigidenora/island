@@ -33,7 +33,7 @@ export class Main extends MainBase {
       }
     });
 
-    this.createView({ scene, camera });
+    this.createView({ scene, camera, enabled: false });
   }
 
   getThirdPersonCamera(): ThirdPersonCamera {

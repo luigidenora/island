@@ -95,5 +95,7 @@ export class GameCharacter extends Group {
     this.position.copy(position);
     this.rotation.copy(rotation);
     this.initialPosition = position.clone();
+
+    this.bindProperty('visible', () => this.canSwim || this.scene?.userData.isRenderTargetRendering);
   }
 }
