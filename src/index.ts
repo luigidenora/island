@@ -29,8 +29,12 @@ import("@dimforge/rapier3d").then((rapier3d) => {
   const levelSelect = new LevelSelect(thirdPersonCamera);
   levelSelect.mount();
 
+  let gameOver = false
   // on game over event
-  window.addEventListener("game-over", () => {;
+  window.addEventListener("game-over", () => {
+    if(gameOver) return
+    // show modal with game over message only once
+    gameOver = true
     // show modal with win message 
     const modal = document.createElement("div");
     modal.className = "win-modal";
@@ -54,12 +58,12 @@ import("@dimforge/rapier3d").then((rapier3d) => {
     modal.appendChild(message);
     modal.appendChild(closeButton);
     document.body.appendChild(modal);
-    window.removeEventListener("game-over", () => {});
-    window.removeEventListener("chestCollision", () => {});
   });
-
+let chestCollision = false
   // on chestCollision game end 
   window.addEventListener("chestCollision", () => {
+    if(chestCollision) return
+    chestCollision = true
     // show modal with win message 
     const modal = document.createElement("div");
     modal.className = "win-modal";

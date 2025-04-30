@@ -421,10 +421,53 @@ export class SwordState extends CharacterState {
 
 
 
-// Placeholder states for future implementation
 export class DeathState extends CharacterState {
+  private _finishedCallback = () => {
+    this._finished();
+  };
+
+  private _cleanupCallback = () => {
+    this._cleanup();
+  };
+
   get name(): CharacterAnimationName {
     return "Death";
+  }
+
+  enter(prevState: CharacterState) {
+    const curAction = this._parent.proxy.animations[this.name].action;
+    const mixer = curAction.getMixer();
+    mixer.addEventListener("finished", this._finishedCallback);
+
+    if (prevState) {
+      const prevAction = this._parent.proxy.animations[prevState.name].action;
+
+      curAction.reset();
+      curAction.setLoop(LoopOnce, 1);
+      curAction.clampWhenFinished = true;
+      curAction.crossFadeFrom(prevAction, 0.5, true);
+      curAction.play();
+    } else {
+      curAction.play();
+    }
+  }
+
+  _finished() {
+    this._cleanup();
+    // Death state is terminal, no transition to another state
+  }
+
+  _cleanup() {
+    const action = this._parent.proxy.animations[this.name].action;
+    action.getMixer().removeEventListener("finished", this._cleanupCallback);
+  }
+
+  exit() {
+    this._cleanup();
+  }
+
+  update(_: number) {
+    // Death state does not respond to input or update logic
   }
 }
 

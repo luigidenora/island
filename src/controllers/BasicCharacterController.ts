@@ -54,6 +54,21 @@ export class BasicCharacterController {
       } else {
         this.input = new CharacterKeybordInputHandler();
       }
+     let isDead = false;
+      window.addEventListener("game-over", () => {
+        if (isDead) return;
+        isDead = true;
+        this.input.keys = {
+          forward: false,
+          backward: false,
+          left: false,
+          right: false,
+          jump: false,
+        };
+        this.stateMachine.setState("Death");
+        window.removeEventListener("game-over", () => {});
+      })
+
     }
 
     this.animator = new CharacterAnimator(character);
