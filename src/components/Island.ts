@@ -4,7 +4,8 @@ import { GLTF, GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DEBUG } from "../config/debug";
 import { parseToInstancedMesh2 } from "./InstancedMesh2Helper";
 
-Asset.preload(GLTFLoader, "assets/models/island.glb"); // Preload the island model when import this component
+Asset.preload(GLTFLoader, "assets/models/island-test-30.glb"); // Preload the island model when import this component
+// Asset.preload(GLTFLoader, "assets/models/island.glb"); // Preload the island model when import this component
 
 export class Island extends Group {
   /**
@@ -14,7 +15,8 @@ export class Island extends Group {
   
   constructor() {
     super();
-    const gltf = Asset.get<GLTF>("assets/models/island.glb");
+    // const gltf = Asset.get<GLTF>("assets/models/island.glb");
+    const gltf = Asset.get<GLTF>("assets/models/island-test-30.glb");
 
     this.convertInstancedMeshes2(gltf);
 

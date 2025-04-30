@@ -1,6 +1,10 @@
-import RAPIER, { type Collider, type RigidBody, type World } from "@dimforge/rapier3d";
+import RAPIER, {
+  type Collider,
+  type RigidBody,
+  type World,
+} from "@dimforge/rapier3d";
 import { InstancedEntity, InstancedMesh2 } from "@three.ez/instanced-mesh";
-import { AnimateEvent, PerspectiveCameraAuto } from "@three.ez/main";
+import { AnimateEvent, Asset, PerspectiveCameraAuto } from "@three.ez/main";
 import {
   BufferAttribute,
   BufferGeometry,
@@ -17,10 +21,12 @@ import {
   NoBlending,
   Object3D,
   PlaneGeometry,
+  PMREMGenerator,
   Quaternion,
   RGBADepthPacking,
   Scene,
   ShaderMaterial,
+  Texture,
   Vector3,
   WebGLRenderer,
   WebGLRenderTarget,
@@ -32,6 +38,9 @@ import { DEBUG } from "../config/debug";
 import { BasicCharacterController } from "../controllers/BasicCharacterController";
 import { SharkCharacterStateMachine } from "../controllers/CharacterStateMachine";
 import { NPCCharacterControl } from "../controllers/NPCCharacterControl";
+// import { EXRLoader } from "three/examples/jsm/Addons.js";
+
+// Asset.preload(EXRLoader, "assets/puresky.exr");
 
 export class MainScene extends Scene {
   private island!: Island;
@@ -78,18 +87,25 @@ export class MainScene extends Scene {
     this._createShark();
     this._createChest();
   }
+
   private _createChest() {
     const spawnPoint = this.island.querySelector("[name=Prop_Chest_Gold001]");
     console.assert(!!spawnPoint, "Chest spawn point not found");
 
-    // add Rapier collider on chest if we touch end game 
-    const chestColliderDesc = RAPIER.ColliderDesc.cuboid(2, 2, 2).setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS).setSensor(true).setTranslation(spawnPoint.position.x, spawnPoint.position.y, spawnPoint.position.z)
+    // add Rapier collider on chest if we touch end game
+    const chestColliderDesc = RAPIER.ColliderDesc.cuboid(2, 2, 2)
+      .setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS)
+      .setSensor(true)
+      .setTranslation(
+        spawnPoint.position.x,
+        spawnPoint.position.y,
+        spawnPoint.position.z
+      )
       .setRotation(spawnPoint.quaternion);
-    const chestBodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
+    const chestBodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased();
 
     const chestBody = this.world.createRigidBody(chestBodyDesc);
-    const chestCollider = this.world.createCollider(chestColliderDesc, chestBody);
-   
+    this.world.createCollider(chestColliderDesc, chestBody);
   }
 
   private _islandSurface() {
@@ -200,11 +216,12 @@ export class MainScene extends Scene {
   private _createEnemies() {
     const spawnPoint = this.island.querySelectorAll("[name^=@Enemy_Spawn]");
 
-    for (const enemy of spawnPoint) { // only one enemy for now
+    for (const enemy of spawnPoint) {
+      // only one enemy for now
       // Create the character
       const randomEnemy =
         this.availableEnemies[
-        Math.floor(Math.random() * this.availableEnemies.length)
+          Math.floor(Math.random() * this.availableEnemies.length)
         ];
       // Lift the enemy position by 1 unit
       enemy.position.y += 2;
@@ -246,7 +263,7 @@ export class MainScene extends Scene {
       this.shark,
       this.world,
       this.player,
-     { detectionRange: 50, attackRange: 5, attackCooldown: 3 },
+      { detectionRange: 50, attackRange: 5, attackCooldown: 3 },
       SharkCharacterStateMachine
     );
   }
@@ -267,11 +284,15 @@ export class MainScene extends Scene {
       this.player,
       this.world
     );
-    this.playerCharacterController.collider.setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);
-    
+    this.playerCharacterController.collider.setActiveEvents(
+      RAPIER.ActiveEvents.COLLISION_EVENTS
+    );
   }
 
   private _setupLighting() {
+    // TODO: Add a skybox
+   // this.initializeEnvironmentMap();
+
     this.background = new Color().setHSL(0.6, 0, 1);
     this.fog = new Fog(this.background, 1, 5000);
 
@@ -283,6 +304,25 @@ export class MainScene extends Scene {
     const dirLight = new DirectionalLight(0xffffff, 5);
 
     this.add(hemiLight, dirLight);
+  }
+
+  private initializeEnvironmentMap() {
+    const pmremGenerator = new PMREMGenerator(this.renderer);
+    pmremGenerator.compileEquirectangularShader();
+
+    const texture = Asset.get<Texture>("assets/puresky.exr");
+    console.assert(
+      texture,
+      "[MainScene] Whoops! Sky texture not found. Make sure to load it first."
+    );
+
+    const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+
+    // this.environment = envMap;
+    this.background = envMap;
+
+    texture.dispose();
+    pmremGenerator.dispose();
   }
 
   private createRenderTarget(): WebGLRenderTarget {
@@ -297,7 +337,6 @@ export class MainScene extends Scene {
     target.samples = 4;
 
     target.depthTexture = new DepthTexture(width, height);
-
 
     if (DEBUG) {
       const debugMaterial = new ShaderMaterial({
@@ -462,7 +501,6 @@ export class MainScene extends Scene {
 
         const body = this.world.createRigidBody(bodyDesc);
 
-
         const geometry = barrelInstance.geometry;
         geometry.computeBoundingBox();
 
@@ -492,7 +530,6 @@ export class MainScene extends Scene {
         });
 
         body.sleep();
-
       });
       barrelInstance.removeFromParent();
       this.add(barrelInstance);
