@@ -23,8 +23,8 @@ import { attachRapierToCharacter } from "./physics/attachRapierToCharacter";
 export class BasicCharacterController {
   protected input: BasicCharacterInputHandler;
   protected animator: CharacterAnimator;
-  protected physics: CharacterPhysicsController;
-  protected stateMachine:
+  public physics: CharacterPhysicsController;
+  public stateMachine:
     | HumanoidCharacterStateMachine
     | SharkCharacterStateMachine;
   public initialPosition: Vector3;

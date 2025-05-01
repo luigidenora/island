@@ -106,9 +106,9 @@ export class NPCCharacterControl extends BasicCharacterController {
     stateMachineClass = HumanoidCharacterStateMachine
   ) {
     super(character, world, stateMachineClass);
-
+    
     const { attackRange = 2.0, attackCooldown = 2.0, detectionRange = 15.0 } = options;
-
+    
     this.input = new NPCInputHandler(character, player, attackRange, attackCooldown, detectionRange);
 
     if (DEBUG) {

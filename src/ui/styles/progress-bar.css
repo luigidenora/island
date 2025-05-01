@@ -6,42 +6,42 @@
     transform: translate(-50%, -50%);
     width: 80%;
     max-width: 600px;
-    background-color: rgba(25, 25, 35, 0.95);
-    border-radius: 24px;
+    border-radius: var(--border-radius);
     padding: 20px;
-    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.25);
-    border: 3px solid #FFB627;
     z-index: 1000;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.3s var(--transition-smooth);
+    font-family: var(--font-primary);
 }
 
 .progress-title {
-    color: #fff;
-    font-family: 'monospace', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text-color);
     font-size: 1.5rem;
     text-align: center;
     margin-bottom: 15px;
     text-transform: uppercase;
-    text-shadow: 2px 2px 0px #b27e15;
+    text-shadow: 2px 2px 0px var(--secondary-color);
 }
 
 .progress-bar-container {
     height: 30px;
     background-color: rgba(0, 0, 0, 0.5);
-    border-radius: 15px;
+    border-radius: calc(var(--border-radius) / 2);
     overflow: hidden;
     position: relative;
-    border: 2px solid #b27e15;
+    border: 2px solid var(--secondary-color);
+    transform: var(--transform-gpu);
+    will-change: transform;
 }
 
 .progress-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #FFB627, #b27e15);
-    border-radius: 15px;
-    transition: width 0.3s ease;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: calc(var(--border-radius) / 2);
+    transition: width 0.3s var(--transition-smooth);
     position: relative;
     overflow: hidden;
+    transform: var(--transform-gpu);
 }
 
 .progress-bar::after {
@@ -56,21 +56,15 @@
     animation: progress-wave 1s linear infinite;
 }
 
-.progress-text {
-    color: #fff;
-    font-family: 'monospace', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 1rem;
-    text-align: center;
-    margin-top: 10px;
-}
-
 .progress-icon {
     position: absolute;
     top: -30px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 3rem;
-    animation: float 2s ease-in-out infinite;
+    animation: float 2s var(--transition-bounce) infinite;
+    color: var(--primary-color);
+    filter: drop-shadow(2px 2px 0 var(--shadow-color));
 }
 
 /* Hidden class for UI elements */
@@ -94,4 +88,18 @@
     50% {
         transform: translateX(-50%) translateY(-10px);
     }
-} 
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .progress-bar,
+    .progress-icon {
+        transition: none;
+        animation: none;
+        transform: none !important;
+    }
+    
+    .progress-bar::after {
+        animation: none;
+    }
+}

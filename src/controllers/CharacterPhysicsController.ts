@@ -7,9 +7,9 @@ export class CharacterPhysicsController {
   public body: RAPIER.RigidBody;
   public collider: RAPIER.Collider;
   private characterController: RAPIER.KinematicCharacterController;
-  private moveSpeed: number = 6.0;
-  private runSpeed: number = 10.0;
-  private rotationSpeed: number = 5.0;
+  public moveSpeed: number = 6.0;
+  public runSpeed: number = 10.0;
+  public rotationSpeed: number = 5.0;
   private readonly GRAVITY = -9.81;
   private direction: Vector3 = new Vector3(0, 0, 1);
 
@@ -120,7 +120,7 @@ export class CharacterPhysicsController {
     // Apply the corrected movement to the character's position
     this.body.setNextKinematicTranslation({
       x: this.body.translation().x + correctedMovement.x,
-      y: this.body.translation().y + correctedMovement.y,
+      y: this.character.canSwim ? this.body.translation().y: this.body.translation().y + correctedMovement.y,
       z: this.body.translation().z + correctedMovement.z,
     });
 

@@ -185,7 +185,7 @@ export class SharkCharacterStateMachine extends FiniteStateMachine {
     this._addState("Walk", SwimState);
     this._addState("Swim_Fast", SwimFastState);
     this._addState("Swim_Bite", SwimBiteState);
-    this.setState("Idle");
+    this.setState("Swim_Bite");
   }
 }
 // Import LoopOnce for the CharacterState class

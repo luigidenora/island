@@ -253,6 +253,7 @@ export class MainScene extends Scene {
 
       this.enemies.push(enemyCharacter);
       this.enemiesCharacterController.push(scrullCharacterController);
+      scrullCharacterController.stateMachine.setState("Walk");
     }
   }
 
@@ -265,6 +266,8 @@ export class MainScene extends Scene {
     // Create the player character
     this.shark = new GameCharacter("Shark", spawnPoint);
     this.shark.canSwim = true;
+    this.shark.height = 0.1;
+    this.shark.radius = 5;
     this.shark.scale.copy(spawnPoint.scale);
     this.shark.position.copy(spawnPoint.position);
     this.shark.quaternion.copy(spawnPoint.quaternion);
@@ -276,9 +279,12 @@ export class MainScene extends Scene {
       this.shark,
       this.world,
       this.player,
-      { detectionRange: 50, attackRange: 5, attackCooldown: 3 },
+      { detectionRange: 40, attackRange: 6, attackCooldown: 3 },
       SharkCharacterStateMachine
     );
+
+    this.sharkCharacterController.physics.moveSpeed = 50;
+    this.sharkCharacterController.stateMachine.setState("Idle");
   }
 
   private _createPlayer() {
@@ -328,7 +334,6 @@ export class MainScene extends Scene {
 
     const envMap = pmremGenerator.fromEquirectangular(texture).texture;
 
-    debugger
     // this.environment = envMap;
     this.background = envMap;
 
@@ -528,9 +533,9 @@ export class MainScene extends Scene {
           box?.max.x - box?.min.x
         )
           .setTranslation(0, box?.max.y - box?.min.y, 0)
-          .setRestitution(0.1) // Slight bounce for heavy object
-          .setFriction(0.8) // Increased friction
-          .setDensity(5.0); // Much higher density to make it heavier
+          .setRestitution(2) // More bounce
+          .setFriction(0.05) // Less friction to slide more
+          .setDensity(1); // Lighter weight for easier throwing
 
         this.world.createCollider(colliderDesc, body);
 
@@ -541,7 +546,7 @@ export class MainScene extends Scene {
           collider: this.world.createCollider(colliderDesc, body),
         });
 
-        body.sleep();
+        // body.sleep();
 
       });
       barrelInstance.removeFromParent();
