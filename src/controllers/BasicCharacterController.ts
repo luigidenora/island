@@ -1,6 +1,6 @@
 import RAPIER from "@dimforge/rapier3d";
-import { Vector3 } from "three";
-import { GameCharacter } from "../components/Characters";
+import { AudioLoader, Vector3, Audio } from "three";
+import { audioListener, GameCharacter } from "../components/Characters";
 import { VirtualJoystick } from "../components/virtual-joystick/VirtualJoystick";
 import { CharacterAnimator } from "./CharacterAnimator";
 import { BasicCharacterInputHandler } from "./CharacterInput";
@@ -12,6 +12,9 @@ import {
   SharkCharacterStateMachine,
 } from "./CharacterStateMachine";
 import { attachRapierToCharacter } from "./physics/attachRapierToCharacter";
+import { Asset } from "@three.ez/main";
+
+Asset.preload(AudioLoader, 'punch.mp3');
 
 /**
  * Main character controller that orchestrates all components.
@@ -28,6 +31,7 @@ export class BasicCharacterController {
     | HumanoidCharacterStateMachine
     | SharkCharacterStateMachine;
   public initialPosition: Vector3;
+  protected punchSound: Audio;
 
   /**
    * Creates a new character controller.
@@ -40,6 +44,10 @@ export class BasicCharacterController {
     protected world: RAPIER.World,
     stateMachineClass = HumanoidCharacterStateMachine
   ) {
+
+    this.punchSound = new Audio(audioListener).setBuffer(Asset.get('punch.mp3'));
+    this.punchSound.setVolume(0.2);
+
     // Attach Rapier physics to the character
     attachRapierToCharacter(character, world);
 
@@ -54,7 +62,7 @@ export class BasicCharacterController {
       } else {
         this.input = new CharacterKeybordInputHandler();
       }
-     let isDead = false;
+      let isDead = false;
       window.addEventListener("game-over", () => {
         if (isDead) return;
         isDead = true;
@@ -63,13 +71,14 @@ export class BasicCharacterController {
           this.input = undefined; // force game over
         }, 500);
 
-        window.removeEventListener("game-over", () => {});
+        window.removeEventListener("game-over", () => { });
       })
-      window.addEventListener("damage", (event) => {  
-          this.stateMachine.setState("HitReact");
-          setTimeout(() => {
-            this.stateMachine.setState("Idle");
-          }, 1000);
+      window.addEventListener("damage", (event) => {
+        !this.punchSound.isPlaying && this.punchSound.play();
+        this.stateMachine.setState("HitReact");
+        setTimeout(() => {
+          this.stateMachine.setState("Idle");
+        }, 1000);
       })
 
     }

@@ -1,5 +1,5 @@
 import { Asset } from "@three.ez/main";
-import { AnimationClip, Box3, Euler, Group, Vector3 } from "three";
+import { AnimationClip, Box3, Euler, Group, Vector3, Audio, AudioLoader, AudioListener } from "three";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 
@@ -26,6 +26,10 @@ Asset.preload(
   "glTF/Characters_Skeleton.gltf",
   "glTF/Characters_Tentacle.gltf"
 );
+
+Asset.preload(AudioLoader, 'sandStep.mp3');
+
+export const audioListener = new AudioListener();
 
 export class GameCharacter extends Group {
   /**
@@ -58,6 +62,10 @@ export class GameCharacter extends Group {
    * @default false
    */
   public isPlayer: boolean = false; // Default to non-player character
+  /**
+   * 
+   */
+  public walkSound: Audio;
 
   /**
    * Creates a new character instance.
@@ -72,6 +80,9 @@ export class GameCharacter extends Group {
   ) {
     super();
     this.name = name;
+
+    this.walkSound = new Audio(audioListener).setBuffer(Asset.get('sandStep.mp3'));
+    this.walkSound.setVolume(0.1);
 
     // Load and clone the character model from assets
     const gltf = Asset.get<GLTF>(`glTF/Characters_${this.name}.gltf`);
@@ -97,5 +108,16 @@ export class GameCharacter extends Group {
     this.initialPosition = position.clone();
 
     this.bindProperty('visible', () => this.canSwim || this.scene?.userData.isRenderTargetRendering);
+
+    const oldPosition = new Vector3();
+    this.on('beforeanimate', () => {
+      oldPosition.copy(this.position);
+    });
+
+    this.on('afteranimate', () => {
+      if (Math.abs(this.position.x - oldPosition.x) > 0.01 || Math.abs(this.position.y - oldPosition.y) > 0.01 || Math.abs(this.position.z - oldPosition.z) > 0.01) {
+        !this.walkSound.isPlaying && this.walkSound.play();
+      }
+    });
   }
 }

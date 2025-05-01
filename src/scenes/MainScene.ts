@@ -88,27 +88,45 @@ export class MainScene extends Scene {
       initLOD(mesh as InstancedMesh2);
     }
 
+    this.initLODMesh();
+  }
+
+  private async initLODMesh(): void {
+    const geoMap = new Map<string, BufferGeometry>();
+
     for (const mesh of this.querySelectorAll('SkinnedMesh')) {
-      createSimplifiedGeometry((mesh as Mesh).geometry, { ratio: 0.3, error: 1, lockBorder: true }).then((geo) => {
-        (mesh as Mesh).geometry = geo;
-      });
+      let geometry = geoMap.get((mesh as Mesh).geometry.uuid);
+
+      if (!geometry) {
+        geometry = await createSimplifiedGeometry((mesh as Mesh).geometry, { ratio: 0.3, error: 1, lockBorder: true });
+        geoMap.set((mesh as Mesh).geometry.uuid, geometry);
+      } else {
+        console.log("cached");
+      }
+
+      (mesh as Mesh).geometry = geometry;
     }
 
     for (const mesh of this.querySelectorAll('Mesh')) {
       if (mesh.name === 'terrain' || mesh.name === '' || mesh.name === 'Molo') continue;
 
-      if (mesh.name.includes('Cliff')) {
-        createSimplifiedGeometry((mesh as Mesh).geometry, { ratio: 0.05, error: 1, lockBorder: true }).then((geo) => {
-          (mesh as Mesh).geometry = geo;
-        });
-        continue;
+      let geometry = geoMap.get((mesh as Mesh).geometry.uuid);
+
+      if (!geometry) {
+        if (mesh.name.includes('Cliff')) {
+          geometry = await createSimplifiedGeometry((mesh as Mesh).geometry, { ratio: 0.05, error: 1, lockBorder: true })
+        } else {
+          geometry = await createSimplifiedGeometry((mesh as Mesh).geometry, { ratio: 0.3, error: 1, lockBorder: true });
+        }
+        geoMap.set((mesh as Mesh).geometry.uuid, geometry);
+      } else {
+        console.log("cached");
       }
 
-      createSimplifiedGeometry((mesh as Mesh).geometry, { ratio: 0.3, error: 1, lockBorder: true }).then((geo) => {
-        (mesh as Mesh).geometry = geo;
-      });
+      (mesh as Mesh).geometry = geometry;
     }
   }
+
   private _createChest() {
     const spawnPoint = this.island.querySelector("[name=Prop_Chest_Gold001]");
     console.assert(!!spawnPoint, "Chest spawn point not found");
@@ -174,7 +192,7 @@ export class MainScene extends Scene {
     this.world.numSolverIterations = 1;
     this.world.timestep = 1 / 30; // 30 hz
     this.eventQueue = new RAPIER.EventQueue(true);
-    this.on("beforeanimate", (e) => {
+    this.on("animate", (e) => {
       this._syncPhysicsObjects(e, this.eventQueue);
     });
   }
@@ -308,7 +326,7 @@ export class MainScene extends Scene {
   }
 
   private _setupLighting() {
-   this.initializeEnvironmentMap();
+    this.initializeEnvironmentMap();
 
     this.fog = new Fog(new Color().setHSL(0.6, 0, 1), 1, 5000);
 
@@ -394,7 +412,7 @@ export class MainScene extends Scene {
       const debugFolder = DEBUG.addFolder({ title: "Renderer Debug" });
       debugFolder?.addBinding(debugPlane, "visible");
 
-      this.on("animate", () => {
+      this.on("afteranimate", () => {
         debugPlane.position.copy(this.camera.position);
         debugPlane.rotation.copy(this.camera.rotation);
         debugPlane.translateZ(this.camera.near * -2);
