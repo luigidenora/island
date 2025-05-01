@@ -74,8 +74,6 @@ export class LevelSelect {
             this.camera.setOffset(-1.0, 5.0, -5.5);
         }
         
-        // Here you can add logic to load the specific level
-        console.log(`Starting level ${levelNumber}`);
     }
 
     mount() {

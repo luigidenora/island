@@ -28,7 +28,6 @@ export class CharacterKeybordInputHandler extends BasicCharacterInputHandler {
   }
 
   private _onKeyDown(e: KeyboardEvent): void {
-    console.log("Key pressed:", e.code);
     switch (e.code) {
       case "KeyW":
         this.keys.forward = true;

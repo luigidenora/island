@@ -100,8 +100,6 @@ export class MainScene extends Scene {
       if (!geometry) {
         geometry = await createSimplifiedGeometry((mesh as Mesh).geometry, { ratio: 0.3, error: 1, lockBorder: true });
         geoMap.set((mesh as Mesh).geometry.uuid, geometry);
-      } else {
-        console.log("cached");
       }
 
       (mesh as Mesh).geometry = geometry;
@@ -119,8 +117,6 @@ export class MainScene extends Scene {
           geometry = await createSimplifiedGeometry((mesh as Mesh).geometry, { ratio: 0.3, error: 1, lockBorder: true });
         }
         geoMap.set((mesh as Mesh).geometry.uuid, geometry);
-      } else {
-        console.log("cached");
       }
 
       (mesh as Mesh).geometry = geometry;
